@@ -882,6 +882,21 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
   </div>
 </section>
 
+<!-- ============ PLAYER FULL PROFILE (отдельная вкладка) ============ -->
+<section id="page-player-profile" class="page">
+  <div class="panel">
+    <a class="link-more" onclick="goTo(playerProfileReturnPage)" style="margin-bottom:16px;">← Назад</a>
+    <div class="modal-head" id="playerProfileHead" style="margin-bottom:18px;"></div>
+    <div class="modal-grid" id="playerProfileStats" style="margin-bottom:20px;"></div>
+    <div class="player-detail-tabs" style="max-width:360px;">
+      <button class="active" id="profileTabBattlesBtn" onclick="switchProfileDetailTab('battles')">Последние бои</button>
+      <button id="profileTabBrawlersBtn" onclick="switchProfileDetailTab('brawlers')">Бравлеры</button>
+    </div>
+    <div id="playerProfileBattlesTab">Загрузка...</div>
+    <div id="playerProfileBrawlersTab" style="display:none;"></div>
+  </div>
+</section>
+
 <!-- ============ GALLERY ============ -->
 <section id="page-gallery" class="page">
   <div class="panel">
@@ -1194,27 +1209,44 @@ function openPlayer(name){
   document.getElementById('playerModal').classList.add('active');
 }
 
+let playerProfileReturnPage = 'roster';
+
 function openPlayerFullStats(tag, name){
-  document.getElementById('playerModalContent').innerHTML = `
-    <button class="modal-close" onclick="document.getElementById('playerModal').classList.remove('active')">✕</button>
-    <button class="link-more" style="margin-bottom:14px; background:none; border:none; padding:0; font-family:var(--font-body);" onclick="openPlayer(${JSON.stringify(name).replace(/"/g,'&quot;')})">← Назад к профилю</button>
-    <div style="font-weight:800; font-size:17px; margin-bottom:14px;">${name}</div>
-    <div class="player-detail-tabs">
-      <button class="active" id="playerTabBattlesBtn" onclick="switchPlayerDetailTab('battles')">Последние бои</button>
-      <button id="playerTabBrawlersBtn" onclick="switchPlayerDetailTab('brawlers')">Бравлеры</button>
+  // запоминаем, откуда пришли (Состав/Главная/Статистика и т.д.), чтобы кнопка "Назад" вела туда же
+  const activePage = document.querySelector('.page.active');
+  if(activePage) playerProfileReturnPage = activePage.id.replace('page-', '');
+
+  document.getElementById('playerModal').classList.remove('active'); // закрываем окошко-модалку
+
+  const p = PLAYERS.find(x => x.name === name) || { name, tag };
+  document.getElementById('playerProfileHead').innerHTML = `
+    <div class="avatar rank1" style="width:64px;height:64px;font-size:28px;">${p.role ? avatarInner(p) : '👤'}</div>
+    <div>
+      <div style="font-weight:800; font-size:20px;">${p.name}</div>
+      ${p.role ? `<span class="badge ${ROLES[p.role].cls}">${ROLES[p.role].label}</span>` : ''}
     </div>
-    <div id="playerBattlesTab">Загрузка...</div>
-    <div id="playerBrawlersTab" style="display:none;"></div>
   `;
-  loadPlayerDetails(tag);
+  document.getElementById('playerProfileStats').innerHTML = p.trophies !== undefined ? `
+    <div class="mini-stat"><div class="v">🏆 ${p.trophies.toLocaleString('ru-RU')}</div><div class="l">Текущие кубки</div></div>
+    <div class="mini-stat"><div class="v">${p.winrate !== null && p.winrate !== undefined ? p.winrate + '%' : '—'}</div><div class="l">Винрейт (посл. бои)</div></div>
+    <div class="mini-stat"><div class="v">${p.bestT ?? '—'}</div><div class="l">Лучший бравлер (кубки)</div></div>
+    <div class="mini-stat"><div class="v">${p.activity ?? '—'}</div><div class="l">Последняя активность</div></div>
+  ` : '';
+
+  document.getElementById('playerProfileBattlesTab').innerHTML = 'Загрузка...';
+  document.getElementById('playerProfileBrawlersTab').innerHTML = '';
+  switchProfileDetailTab('battles');
+
+  goTo('player-profile');
+  loadPlayerDetails(tag, 'playerProfileBattlesTab', 'playerProfileBrawlersTab');
 }
 
-function switchPlayerDetailTab(tab){
+function switchProfileDetailTab(tab){
   const isBattles = tab === 'battles';
-  document.getElementById('playerBattlesTab').style.display = isBattles ? '' : 'none';
-  document.getElementById('playerBrawlersTab').style.display = isBattles ? 'none' : '';
-  document.getElementById('playerTabBattlesBtn').classList.toggle('active', isBattles);
-  document.getElementById('playerTabBrawlersBtn').classList.toggle('active', !isBattles);
+  document.getElementById('playerProfileBattlesTab').style.display = isBattles ? '' : 'none';
+  document.getElementById('playerProfileBrawlersTab').style.display = isBattles ? 'none' : '';
+  document.getElementById('profileTabBattlesBtn').classList.toggle('active', isBattles);
+  document.getElementById('profileTabBrawlersBtn').classList.toggle('active', !isBattles);
 }
 
 const MODE_NAME_RU = {
@@ -1234,9 +1266,9 @@ function brawlerImgTag(brawlerId, size=20){
     : `<div class="bic-sm" style="width:${size}px;height:${size}px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06);">⭐</div>`;
 }
 
-async function loadPlayerDetails(tag){
-  const battlesEl = document.getElementById('playerBattlesTab');
-  const brawlersEl = document.getElementById('playerBrawlersTab');
+async function loadPlayerDetails(tag, battlesElId='playerProfileBattlesTab', brawlersElId='playerProfileBrawlersTab'){
+  const battlesEl = document.getElementById(battlesElId);
+  const brawlersEl = document.getElementById(brawlersElId);
   if(!tag){
     battlesEl.innerHTML = '<p style="color:var(--text-faint); font-size:12.5px;">Нет тега игрока (демо-данные) — подробная статистика недоступна.</p>';
     return;
@@ -1245,15 +1277,15 @@ async function loadPlayerDetails(tag){
     const res = await fetch(`${BACKEND_URL}/api/player/${encodeURIComponent(tag.replace('#',''))}/details`);
     if(!res.ok) throw new Error('fail');
     const details = await res.json();
-    renderPlayerBattlesTab(details.battles || []);
-    renderPlayerBrawlersTab(details.brawlers || []);
+    renderPlayerBattlesTab(details.battles || [], battlesElId);
+    renderPlayerBrawlersTab(details.brawlers || [], brawlersElId);
   }catch(e){
     battlesEl.innerHTML = '<p style="color:var(--red); font-size:12.5px;">Не удалось загрузить статистику игрока.</p>';
   }
 }
 
-function renderPlayerBattlesTab(battles){
-  const el = document.getElementById('playerBattlesTab');
+function renderPlayerBattlesTab(battles, targetId='playerProfileBattlesTab'){
+  const el = document.getElementById(targetId);
   if(!battles.length){ el.innerHTML = '<p style="color:var(--text-dim); font-size:12.5px;">Нет недавних боёв.</p>'; return; }
 
   el.innerHTML = battles.slice(0, 15).map(b => {
@@ -1306,8 +1338,8 @@ function parseBattleTimeClient(str){
   return `${y}-${mo}-${d}T${h}:${mi}:${s}Z`;
 }
 
-function renderPlayerBrawlersTab(brawlers){
-  const el = document.getElementById('playerBrawlersTab');
+function renderPlayerBrawlersTab(brawlers, targetId='playerProfileBrawlersTab'){
+  const el = document.getElementById(targetId);
   if(!brawlers.length){ el.innerHTML = '<p style="color:var(--text-dim); font-size:12.5px;">Нет данных о бравлерах.</p>'; return; }
 
   const rarityColor = { 'Common':'var(--text-dim)', 'Rare':'var(--green)', 'Super Rare':'var(--cyan)', 'Epic':'#c3aeff', 'Mythic':'#ff8afb', 'Legendary':'var(--gold-1)', 'Chromatic':'var(--gold-1)' };
