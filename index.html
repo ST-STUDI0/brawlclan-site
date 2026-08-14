@@ -707,7 +707,7 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
   </div>
 
   <div class="panel">
-    <div class="panel-header"><h2>🧩 Состав на ближайшие бои <span style="color:var(--text-dim); font-weight:600; font-size:12px;">(18 из 30 слотов выбрано)</span></h2></div>
+    <div class="panel-header"><h2>🧩 Состав на ближайшие бои</h2></div>
     <div class="lineup-grid" id="lineupGrid"></div>
   </div>
 
@@ -1402,26 +1402,77 @@ function renderSchedule(){
     </div>
   `).join('');
 }
-function renderLineup(){
-  const lineup = PLAYERS.slice(0,10);
-  document.getElementById('lineupGrid').innerHTML = lineup.map((p,i)=>`
-    <div class="lineup-card">
-      <div class="avatar" style="width:38px;height:38px;font-size:16px;">${avatarInner(p)}</div>
-      <div><div style="font-weight:700; font-size:13px;">${p.name}</div><div style="color:var(--text-dim); font-size:11px;">${p.best} выбран</div></div>
-      <div class="lineup-status">${i<8?'✅':'⏳'}</div>
-    </div>
-  `).join('');
+async function renderLineupFromEvents(events){
+  const grid = document.getElementById('lineupGrid');
+  if(!grid) return;
+
+  // "Ближайшие бои" — события, у которых ещё нет результата (то есть матч ещё не прошёл)
+  const upcoming = events.filter(e => !e.result);
+  if(!upcoming.length){
+    grid.innerHTML = '<p style="color:var(--text-dim); grid-column:1/-1;">Нет предстоящих боёв.</p>';
+    return;
+  }
+
+  grid.innerHTML = '<p style="color:var(--text-dim); grid-column:1/-1;">Загрузка заявок...</p>';
+
+  const statusIcon = { pending: '⏳', approved: '✅', rejected: '❌' };
+  const statusLabel = { pending: 'Ожидает', approved: 'Подтверждено', rejected: 'Отказ' };
+
+  try{
+    const results = await Promise.all(upcoming.map(async ev => {
+      const res = await fetch(`${BACKEND_URL}/api/events/${ev.id}/lineup`);
+      const apps = res.ok ? await res.json() : [];
+      return apps.map(a => ({ ...a, eventTitle: ev.title }));
+    }));
+    const allApps = results.flat();
+
+    if(!allApps.length){
+      grid.innerHTML = '<p style="color:var(--text-dim); grid-column:1/-1;">Заявок пока нет.</p>';
+      return;
+    }
+
+    grid.innerHTML = allApps.map(a => `
+      <div class="lineup-card">
+        <div class="avatar" style="width:38px;height:38px;font-size:16px;">👤</div>
+        <div>
+          <div style="font-weight:700; font-size:13px;">${a.discord_username}</div>
+          <div style="color:var(--text-dim); font-size:11px;">${a.eventTitle}${a.assigned_team ? ' · ' + a.assigned_team : ''}</div>
+        </div>
+        <div class="lineup-status" title="${statusLabel[a.status] || a.status}">${statusIcon[a.status] || '⏳'}</div>
+      </div>
+    `).join('');
+  }catch(e){
+    grid.innerHTML = '<p style="color:var(--red); grid-column:1/-1;">Не удалось загрузить заявки.</p>';
+  }
 }
-function renderHistory(){
-  document.getElementById('historyList').innerHTML = HISTORY.map(h=>`
-    <div class="match-row">
-      <div class="match-icon" style="background:${h.result==='win'?'rgba(60,232,122,.12)':'rgba(255,77,109,.12)'}; color:${h.result==='win'?'var(--green)':'var(--red)'};">${h.result==='win'?'🏆':'💀'}</div>
-      <div class="match-type"><div class="t1">${h.map}</div><div class="t2">против ${h.opponent}</div></div>
-      <span class="badge ${h.result}">${h.result==='win'?'ПОБЕДА':'ПОРАЖЕНИЕ'}</span>
-      <div class="match-score">${h.score}</div>
-      <div class="match-time">${h.date}</div>
-    </div>
-  `).join('');
+
+function renderHistoryFromEvents(events){
+  const list = document.getElementById('historyList');
+  if(!list) return;
+
+  // "История матчей" — наши кланские события, у которых уже есть результат
+  const past = events.filter(e => e.result).sort((a,b) => new Date(b.event_date) - new Date(a.event_date));
+  if(!past.length){
+    list.innerHTML = '<p style="color:var(--text-dim);">Пока нет завершённых матчей.</p>';
+    return;
+  }
+
+  list.innerHTML = past.map(e => {
+    const [s1, s2] = e.result.split('-').map(n => parseInt(n.trim(), 10));
+    const won = !isNaN(s1) && !isNaN(s2) && s1 > s2;
+    const lost = !isNaN(s1) && !isNaN(s2) && s2 > s1;
+    const resultClass = won ? 'win' : lost ? 'lose' : '';
+    const resultLabel = won ? 'ПОБЕДА' : lost ? 'ПОРАЖЕНИЕ' : 'НИЧЬЯ';
+    const dateStr = e.event_date ? new Date(e.event_date).toLocaleDateString('ru-RU', {day:'2-digit', month:'short'}) : '';
+    return `
+      <div class="match-row" style="cursor:pointer;" onclick="openMatchModal('${e.id}')">
+        <div class="match-icon" style="background:${won?'rgba(60,232,122,.12)':lost?'rgba(255,77,109,.12)':'rgba(255,255,255,.06)'}; color:${won?'var(--green)':lost?'var(--red)':'var(--text-dim)'};">${won?'🏆':lost?'💀':'➖'}</div>
+        <div class="match-type"><div class="t1">${e.title}</div><div class="t2">${e.map || e.mode || ''}</div></div>
+        ${resultClass ? `<span class="badge ${resultClass}">${resultLabel}</span>` : ''}
+        <div class="match-score">${e.result}</div>
+        <div class="match-time">${dateStr}</div>
+      </div>`;
+  }).join('');
 }
 
 /* ============ EVENTS RENDER ============ */
@@ -1545,6 +1596,8 @@ async function loadRealEvents(){
     REAL_EVENTS_CACHE = events;
     renderRealEvents(events);
     renderScheduleFromEvents(events);
+    renderLineupFromEvents(events);
+    renderHistoryFromEvents(events);
   }catch(e){
     console.warn('Не удалось загрузить события с бэкенда, остаёмся на демо:', e);
   }
