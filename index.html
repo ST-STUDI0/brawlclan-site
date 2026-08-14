@@ -397,7 +397,8 @@ select option{background:#171432; color:#f5f5fb;}
 .countdown-block .cbox .l{font-size:9.5px; color:var(--text-dim); text-transform:uppercase; margin-top:2px;}
 
 /* ---------- MATCH MODAL: картинка, две команды, видео ---------- */
-.match-modal-banner{width:100%; height:150px; border-radius:14px; object-fit:cover; margin-bottom:16px; background:linear-gradient(135deg,#2a1f5c,#3d2a7a);}
+.match-modal-banner{width:100%; height:150px; border-radius:14px; object-fit:cover; margin-bottom:16px; background:linear-gradient(135deg,#2a1f5c,#3d2a7a); position:relative; overflow:hidden;}
+.match-modal-banner img{width:100%; height:100%; object-fit:cover;}
 .two-teams-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
 .team-block{background:rgba(255,255,255,.03); border:1px solid var(--stroke); border-radius:14px; padding:14px;}
 .team-block .team-name{font-family:var(--font-display); font-weight:800; font-size:12px; letter-spacing:1px; color:var(--cyan); text-transform:uppercase; margin-bottom:10px;}
@@ -745,26 +746,32 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 <section id="page-admin" class="page">
   <div class="panel">
     <div class="panel-header">
-      <h2>🛠 Клановые события</h2>
+      <h2 id="createEventFormTitle">🛠 Клановые события</h2>
       <a onclick="toggleCreateEventForm()" id="createEventToggle">+ Создать событие</a>
     </div>
     <form class="admin-create-form" id="createEventForm" style="display:none;" onsubmit="event.preventDefault(); submitNewEvent();">
+      <input type="hidden" id="editingEventId" value="">
       <input type="text" id="newEvTitle" placeholder="Название события" required>
-      <select id="newEvFormat">
+      <select id="newEvFormat" onchange="onFormatChange()">
         <option value="3x3">⚔️ 3×3</option>
         <option value="5x5">⚔️ 5×5</option>
         <option value="tournament">🏆 Турнир</option>
       </select>
       <input type="datetime-local" id="newEvDate" required>
-      <input type="text" id="newEvMode" placeholder="Режим (например Нокаут)">
+      <select id="newEvMode">
+        <option value="">Режим не выбран</option>
+      </select>
       <div class="full" style="position:relative;">
         <input type="text" id="newEvMapSearch" placeholder="Начни вписывать название карты..." autocomplete="off" oninput="searchMaps(this.value)">
         <input type="hidden" id="newEvMap">
         <div class="map-search-results" id="mapSearchResults"></div>
       </div>
-      <div class="full">
-        <label class="file-input-label">🖼 Прикрепить картинку события<input type="file" id="newEvImageFile" accept="image/*"></label>
+      <div class="full" id="imageUploadRow">
+        <label class="file-input-label">🖼 Прикрепить картинку турнира<input type="file" id="newEvImageFile" accept="image/*"></label>
         <span id="newEvImageName" style="color:var(--text-dim); font-size:11.5px; margin-left:8px;"></span>
+      </div>
+      <div class="full" id="fixedImageHint" style="display:none; color:var(--text-dim); font-size:11.5px;">
+        Для формата 3×3/5×5 используется фиксированная картинка (img/3x3.png / img/5x5.png) — загружать не нужно.
       </div>
       <div class="full">
         <label class="file-input-label">🎬 Загрузить видео (необязательно)<input type="file" id="newEvVideoFile" accept="video/*"></label>
@@ -1169,7 +1176,7 @@ async function openMatchModal(eventId){
   const content = document.getElementById('matchModalContent');
   content.innerHTML = `
     <button class="modal-close" onclick="document.getElementById('matchModal').classList.remove('active')">✕</button>
-    ${event.image_url ? `<img src="${event.image_url}" class="match-modal-banner" alt="">` : ''}
+    ${eventBannerSrc(event) ? `<div class="match-modal-banner">${eventBannerHtml(event, '')}</div>` : ''}
     <div style="font-weight:800; font-size:19px; margin-bottom:6px;">${event.title}</div>
     <div style="color:var(--text-dim); font-size:13px; margin-bottom:10px;">
       ${event.event_date ? new Date(event.event_date).toLocaleString('ru-RU', {day:'2-digit', month:'long', hour:'2-digit', minute:'2-digit'}) : 'Дата уточняется'}
@@ -1525,6 +1532,17 @@ async function loadRealEvents(){
   }
 }
 
+// Общая функция для баннера события: фиксированная картинка формата + иконка режима в углу
+function eventBannerHtml(event, fallbackIcon){
+  const src = eventBannerSrc(event);
+  const modeIcon = modeIconPath(event.mode);
+  const modeIconHtml = modeIcon
+    ? `<img src="${modeIcon}" alt="" style="position:absolute; top:8px; right:8px; width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">`
+    : '';
+  const bg = src ? `<img src="${src}" alt="" style="width:100%; height:100%; object-fit:cover;">` : fallbackIcon;
+  return `${bg}${modeIconHtml}`;
+}
+
 function renderRealEvents(events){
   const banners = ['b1','b2','b3'];
   const icons = ['🏆','💥','🎯','⚡','🔥','🌟'];
@@ -1536,12 +1554,9 @@ function renderRealEvents(events){
     const btnLabel = currentUser ? 'Подать заявку' : 'Войдите, чтобы подать заявку';
     const formatBadge = e.format && formatLabels[e.format]
       ? `<span class="status-pill upcoming" style="margin-left:8px;">${formatLabels[e.format]}</span>` : '';
-    const bannerInner = e.image_url
-      ? `<img src="${e.image_url}" alt="">`
-      : icons[i % icons.length];
     return `
       <div class="event-card">
-        <div class="event-banner ${banners[i % banners.length]}" onclick="openMatchModal('${e.id}')" style="cursor:pointer;">${bannerInner}</div>
+        <div class="event-banner ${banners[i % banners.length]}" onclick="openMatchModal('${e.id}')" style="cursor:pointer;">${eventBannerHtml(e, icons[i % icons.length])}</div>
         <div class="event-body">
           <h3 style="cursor:pointer;" onclick="openMatchModal('${e.id}')">${e.title}${formatBadge}</h3>
           <div class="meta"><span>📅 ${dateStr}</span>${e.mode ? `<span>🎮 ${e.mode}</span>` : ''}${e.map ? `<span>🗺 ${e.map}</span>` : ''}</div>
@@ -1584,11 +1599,111 @@ document.getElementById('eventsGrid').addEventListener('click', (e) => {
    АДМИН-ПАНЕЛЬ (видна только тебе, после входа с твоим Discord ID в ADMIN_DISCORD_IDS)
    ========================================================================== */
 /* ============ СОЗДАНИЕ СОБЫТИЯ (АДМИН) ============ */
+// Список режимов Brawl Stars с номерами — иконки лежат в img/r/{номер}.webp
+const GAME_MODES = [
+  { id: 1, name: 'АЭРОБОЙ' },
+  { id: 2, name: 'БРОУЛБОЛ' },
+  { id: 3, name: 'ЗАХВАТ КРИСТАЛЛОВ' },
+  { id: 4, name: 'НОКАУТ' },
+  { id: 5, name: 'ОГРАБЛЕНИЕ' },
+  { id: 6, name: 'ГОРЯЧАЯ ЗОНА' },
+  { id: 7, name: 'НАГРАДА ЗА ПОИМКУ' },
+  { id: 8, name: 'БАСКЕТБОЙ' },
+  { id: 9, name: 'ВОЛЕЙБОЙ' },
+  { id: 10, name: 'АРЕНА' },
+  { id: 11, name: 'ТРОЙНОЕ СТОЛКНОВЕНИЕ' },
+];
+function modeIconPath(modeName){
+  const m = GAME_MODES.find(x => x.name === modeName);
+  return m ? `img/r/${m.id}.webp` : null;
+}
+// Фиксированные баннеры для форматов 3×3 и 5×5 (турнир — картинка своя, через загрузку)
+function eventBannerSrc(event){
+  if(event.format === '3x3') return 'img/3x3.png';
+  if(event.format === '5x5') return 'img/5x5.png';
+  return event.image_url || null; // турнир — то, что загрузили; если нет — покажем эмодзи-заглушку
+}
+
+// заполняем выпадающий список режимов один раз
+(function fillModeSelect(){
+  const sel = document.getElementById('newEvMode');
+  if(!sel) return;
+  GAME_MODES.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.name;
+    opt.textContent = m.name;
+    sel.appendChild(opt);
+  });
+})();
+
+function onFormatChange(){
+  const format = document.getElementById('newEvFormat').value;
+  const isTournament = format === 'tournament';
+  document.getElementById('imageUploadRow').style.display = isTournament ? '' : 'none';
+  document.getElementById('fixedImageHint').style.display = isTournament ? 'none' : '';
+}
+onFormatChange(); // применяем сразу при загрузке формы
+
 let MAPS_CACHE = [];
 
 function toggleCreateEventForm(){
   const form = document.getElementById('createEventForm');
-  form.style.display = form.style.display === 'none' ? 'grid' : 'none';
+  const opening = form.style.display === 'none';
+  form.style.display = opening ? 'grid' : 'none';
+  if(opening && !document.getElementById('editingEventId').value){
+    resetEventForm(); // открыли форму для СОЗДАНИЯ (не редактирования) — очищаем на всякий случай
+  }
+}
+
+function resetEventForm(){
+  document.getElementById('editingEventId').value = '';
+  document.getElementById('createEventForm').reset();
+  document.getElementById('newEvImageName').textContent = '';
+  document.getElementById('newEvVideoName').textContent = '';
+  document.getElementById('createEventFormTitle').textContent = '🛠 Клановые события';
+  document.getElementById('submitNewEventBtn').textContent = 'Создать событие';
+  onFormatChange();
+}
+
+function toLocalDatetimeInputValue(isoString){
+  const d = new Date(isoString);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function editEvent(eventId){
+  const ev = REAL_EVENTS_CACHE.find(e => e.id === eventId);
+  if(!ev) return;
+  document.getElementById('editingEventId').value = ev.id;
+  document.getElementById('newEvTitle').value = ev.title || '';
+  document.getElementById('newEvFormat').value = ev.format || '3x3';
+  document.getElementById('newEvDate').value = ev.event_date ? toLocalDatetimeInputValue(ev.event_date) : '';
+  document.getElementById('newEvMode').value = ev.mode || '';
+  document.getElementById('newEvMapSearch').value = ev.map || '';
+  document.getElementById('newEvMap').value = ev.map || '';
+  document.getElementById('newEvVideoLink').value = (ev.video_url && !ev.video_url.includes('/storage/v1/')) ? ev.video_url : '';
+  document.getElementById('newEvDescription').value = ev.description || '';
+  document.getElementById('createEventFormTitle').textContent = '✏️ Редактирование: ' + ev.title;
+  document.getElementById('submitNewEventBtn').textContent = 'Сохранить изменения';
+  onFormatChange();
+  document.getElementById('createEventForm').style.display = 'grid';
+  document.getElementById('createEventForm').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function deleteEvent(eventId, title){
+  if(!confirm(`Удалить событие «${title}»? Все заявки на него тоже удалятся. Это необратимо.`)) return;
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/admin/events/${eventId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
+    });
+    if(!res.ok) throw new Error('delete failed');
+    showToast('Событие удалено');
+    loadRealEvents();
+    loadAdminApplications();
+  }catch(e){
+    showToast('Не удалось удалить событие');
+  }
 }
 
 async function searchMaps(query){
@@ -1645,6 +1760,7 @@ document.getElementById('newEvVideoFile')?.addEventListener('change', function()
 
 async function submitNewEvent(){
   const btn = document.getElementById('submitNewEventBtn');
+  const editingId = document.getElementById('editingEventId').value;
   const title = document.getElementById('newEvTitle').value.trim();
   const format = document.getElementById('newEvFormat').value;
   const dateVal = document.getElementById('newEvDate').value;
@@ -1656,39 +1772,47 @@ async function submitNewEvent(){
   if(!title || !dateVal){ showToast('Заполни название и дату события'); return; }
 
   btn.disabled = true;
-  btn.textContent = 'Создаём...';
+  btn.textContent = editingId ? 'Сохраняем...' : 'Создаём...';
   try{
-    let image_url = null;
+    // картинку загружаем только для турнира — у 3×3/5×5 она фиксированная (img/3x3.png, img/5x5.png)
+    let image_url = format === 'tournament' ? undefined : null;
     let video_url = videoLink || null;
 
-    const imageFile = document.getElementById('newEvImageFile');
-    if(imageFile.files[0]) image_url = await uploadFile(imageFile);
+    if(format === 'tournament'){
+      const imageFile = document.getElementById('newEvImageFile');
+      if(imageFile.files[0]) image_url = await uploadFile(imageFile);
+      else if(editingId) image_url = undefined; // при редактировании без нового файла — не трогаем старую картинку
+    }
 
     const videoFile = document.getElementById('newEvVideoFile');
     if(videoFile.files[0]) video_url = await uploadFile(videoFile); // загруженный файл важнее вставленной ссылки
+    else if(editingId && !videoLink) video_url = undefined; // не трогаем старое видео, если ничего нового не дали
 
-    const res = await fetch(`${BACKEND_URL}/api/admin/events`, {
-      method: 'POST',
+    const payload = {
+      title, format, mode: mode || null, map: map || null, description: description || null,
+      event_date: new Date(dateVal).toISOString(), video_url,
+    };
+    if(image_url !== undefined) payload.image_url = image_url;
+
+    const url = editingId ? `${BACKEND_URL}/api/admin/events/${editingId}` : `${BACKEND_URL}/api/admin/events`;
+    const method = editingId ? 'PATCH' : 'POST';
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-      body: JSON.stringify({
-        title, format, mode: mode || null, map: map || null, description: description || null,
-        event_date: new Date(dateVal).toISOString(), image_url, video_url,
-      }),
+      body: JSON.stringify(payload),
     });
-    if(!res.ok) throw new Error('create failed');
+    if(!res.ok) throw new Error('save failed');
 
-    showToast('Событие создано ✅');
-    document.getElementById('createEventForm').reset();
-    document.getElementById('newEvImageName').textContent = '';
-    document.getElementById('newEvVideoName').textContent = '';
+    showToast(editingId ? 'Событие обновлено ✅' : 'Событие создано ✅');
+    resetEventForm();
     toggleCreateEventForm();
     loadRealEvents();
     loadAdminApplications();
   }catch(e){
-    showToast('Не удалось создать событие');
+    showToast('Не удалось сохранить событие');
   }finally{
     btn.disabled = false;
-    btn.textContent = 'Создать событие';
+    btn.textContent = editingId ? 'Сохранить изменения' : 'Создать событие';
   }
 }
 
@@ -1732,7 +1856,13 @@ async function loadAdminApplications(){
 
       return `
         <div class="panel" style="margin-bottom:18px; padding:20px;">
-          <div style="font-weight:800; font-size:15px; margin-bottom:12px;">${ev.title} <span style="color:var(--text-dim); font-weight:600; font-size:12px;">(${evApps.length} заявок)</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="font-weight:800; font-size:15px;">${ev.title} <span style="color:var(--text-dim); font-weight:600; font-size:12px;">(${evApps.length} заявок)</span></div>
+            <div style="display:flex; gap:8px;">
+              <a onclick="editEvent('${ev.id}')" style="cursor:pointer; color:var(--cyan); font-size:12.5px; font-weight:700;">✏️ Редактировать</a>
+              <a onclick="deleteEvent('${ev.id}', ${JSON.stringify(ev.title).replace(/"/g,'&quot;')})" style="cursor:pointer; color:var(--red); font-size:12.5px; font-weight:700;">🗑 Удалить</a>
+            </div>
+          </div>
           <div class="grid-2" style="gap:10px; margin-bottom:14px;">
             <input placeholder="Режим (например Нокаут)" value="${ev.mode || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:9px 12px; color:var(--text); font-size:12.5px;" onchange="updateEvent('${ev.id}', {mode: this.value})">
             <input placeholder="Карта" value="${ev.map || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:9px 12px; color:var(--text); font-size:12.5px;" onchange="updateEvent('${ev.id}', {map: this.value})">
