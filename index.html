@@ -701,14 +701,14 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
         <option value="trophies_desc">Кубки ↓</option>
         <option value="trophies_asc">Кубки ↑</option>
         <option value="name">Ник (А-Я)</option>
-        <option value="winrate">Винрейт КЛ</option>
+        <option value="winrate">Винрейт</option>
         <option value="activity">Последняя активность</option>
       </select>
     </div>
     <table class="roster-table">
       <thead>
         <tr>
-          <th>Игрок</th><th>Роль</th><th class="sortable" id="trophySortHeader" onclick="toggleTrophySort()">Кубки ↓</th><th>Лучший бравлер</th><th>Винрейт КЛ</th><th>Активность</th>
+          <th>Игрок</th><th>Роль</th><th class="sortable" id="trophySortHeader" onclick="toggleTrophySort()">Кубки ↓</th><th>Лучший бравлер</th><th>Винрейт <span style="color:var(--text-faint); font-weight:600;">(посл. бои)</span></th><th>Активность</th>
         </tr>
       </thead>
       <tbody id="rosterBody"></tbody>
@@ -1154,7 +1154,7 @@ function renderRoster(){
   if(sort==='trophies_desc') list.sort((a,b)=>b.trophies-a.trophies);
   if(sort==='trophies_asc') list.sort((a,b)=>a.trophies-b.trophies);
   if(sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
-  if(sort==='winrate') list.sort((a,b)=>b.winrate-a.winrate);
+  if(sort==='winrate') list.sort((a,b)=>(b.winrate ?? -1)-(a.winrate ?? -1));
   if(sort==='activity') list.sort((a,b)=>(b.online?1:0)-(a.online?1:0));
 
   document.getElementById('rosterBody').innerHTML = list.map(p=>`
@@ -1163,7 +1163,7 @@ function renderRoster(){
       <td><span class="badge ${ROLES[p.role].cls}">${ROLES[p.role].label}</span></td>
       <td>🏆 ${p.trophies.toLocaleString('ru-RU')}</td>
       <td><span class="bic">${bestBrawlerIconInner(p)}</span> ${p.bestT}</td>
-      <td><div class="winrate-wrap"><div class="winrate-track"><div class="winrate-fill" style="width:${p.winrate}%;"></div></div>${p.winrate}%</div></td>
+      <td><div class="winrate-wrap">${p.winrate !== null && p.winrate !== undefined ? `<div class="winrate-track"><div class="winrate-fill" style="width:${p.winrate}%;"></div></div>${p.winrate}%` : '<span style="color:var(--text-faint);">—</span>'}</div></td>
       <td>${p.online?'<span class="online-dot"></span>':'<span class="offline-dot"></span>'}${p.activity}</td>
     </tr>
   `).join('');
@@ -1185,11 +1185,11 @@ function openPlayer(name){
     </div>
     <div class="modal-grid">
       <div class="mini-stat"><div class="v">🏆 ${p.trophies.toLocaleString('ru-RU')}</div><div class="l">Текущие кубки</div></div>
-      <div class="mini-stat"><div class="v">${p.winrate}%</div><div class="l">Винрейт в КЛ</div></div>
+      <div class="mini-stat"><div class="v">${p.winrate !== null && p.winrate !== undefined ? p.winrate + '%' : '—'}</div><div class="l">Винрейт (посл. бои)</div></div>
       <div class="mini-stat"><div class="v">${p.bestT}</div><div class="l">Лучший бравлер (кубки)</div></div>
       <div class="mini-stat"><div class="v">${p.activity}</div><div class="l">Последняя активность</div></div>
     </div>
-    <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="openPlayerFullStats('${p.tag || ''}', ${JSON.stringify(p.name)})">📊 Полная статистика</button>
+    <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="openPlayerFullStats(${JSON.stringify(p.tag || '').replace(/"/g,'&quot;')}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">📊 Полная статистика</button>
   `;
   document.getElementById('playerModal').classList.add('active');
 }
@@ -1197,7 +1197,7 @@ function openPlayer(name){
 function openPlayerFullStats(tag, name){
   document.getElementById('playerModalContent').innerHTML = `
     <button class="modal-close" onclick="document.getElementById('playerModal').classList.remove('active')">✕</button>
-    <button class="link-more" style="margin-bottom:14px; background:none; border:none; padding:0; font-family:var(--font-body);" onclick="openPlayer(${JSON.stringify(name)})">← Назад к профилю</button>
+    <button class="link-more" style="margin-bottom:14px; background:none; border:none; padding:0; font-family:var(--font-body);" onclick="openPlayer(${JSON.stringify(name).replace(/"/g,'&quot;')})">← Назад к профилю</button>
     <div style="font-weight:800; font-size:17px; margin-bottom:14px;">${name}</div>
     <div class="player-detail-tabs">
       <button class="active" id="playerTabBattlesBtn" onclick="switchPlayerDetailTab('battles')">Последние бои</button>
@@ -2439,14 +2439,14 @@ async function loadRealData() {
     const roster = await res.json();
     if (!Array.isArray(roster) || roster.length === 0) return;
 
-    // сначала подтягиваем активность — у неё есть время последнего боя (lastBattleAt)
-    // каждого игрока, привязанное к его тегу
+    // сначала подтягиваем активность — у неё есть время последнего боя и реальный винрейт
+    // по последним боям (посчитан на бэкенде из того же battlelog)
     const activityMap = new Map();
     try {
       const activityRes = await fetch(`${BACKEND_URL}/api/activity`);
       if (activityRes.ok) {
         const activity = await activityRes.json();
-        (activity.perPlayer || []).forEach((p) => activityMap.set(p.tag, p.lastBattleAt));
+        (activity.perPlayer || []).forEach((p) => activityMap.set(p.tag, { lastBattleAt: p.lastBattleAt, winratePct: p.winratePct }));
         const bigEl = document.getElementById("activityBig");
         const subEl = document.getElementById("activitySub");
         if (bigEl) bigEl.textContent = activity.activeToday;
@@ -2461,7 +2461,8 @@ async function loadRealData() {
     PLAYERS.length = 0;
     roster.forEach((p) => {
       const emoji = brawlerIconFallback(p.bestBrawlerName);
-      const lastBattleAt = activityMap.get(p.tag) || null;
+      const activityInfo = activityMap.get(p.tag) || {};
+      const lastBattleAt = activityInfo.lastBattleAt || null;
       const isOnline = lastBattleAt ? (Date.now() - new Date(lastBattleAt).getTime() <= 60 * 60 * 1000) : false;
       PLAYERS.push({
         name: p.name,
@@ -2470,7 +2471,7 @@ async function loadRealData() {
         trophies: p.trophies,
         best: emoji,
         bestT: p.bestBrawlerTrophies,
-        winrate: 50,
+        winrate: activityInfo.winratePct !== null && activityInfo.winratePct !== undefined ? activityInfo.winratePct : null,
         activity: formatLastSeen(lastBattleAt),
         online: isOnline,
         joined: "—",
