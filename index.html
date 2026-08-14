@@ -403,7 +403,11 @@ select option{background:#171432; color:#f5f5fb;}
 .match-modal-banner{width:100%; height:170px; border-radius:14px; object-fit:contain; margin:26px 0 16px; background:linear-gradient(135deg,#2a1f5c,#3d2a7a); position:relative; overflow:hidden;}
 .match-modal-banner img{width:100%; height:100%; object-fit:contain;}
 .two-teams-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
-.team-block{background:rgba(255,255,255,.03); border:1px solid var(--stroke); border-radius:14px; padding:14px;}
+.team-block{background:rgba(255,255,255,.03); border:1px solid var(--stroke); border-radius:14px; padding:14px; transition:background .2s, border-color .2s;}
+.team-block.winner{background:rgba(60,232,122,.09); border-color:rgba(60,232,122,.5); box-shadow:0 0 22px rgba(60,232,122,.12);}
+.team-block.loser{background:rgba(255,77,109,.06); border-color:rgba(255,77,109,.35);}
+.team-block.winner .team-name{color:var(--green);}
+.team-block.loser .team-name{color:var(--red);}
 .team-block .team-name{font-family:var(--font-display); font-weight:800; font-size:12px; letter-spacing:1px; color:var(--cyan); text-transform:uppercase; margin-bottom:10px;}
 .team-block .team-player{font-size:13px; padding:6px 0; border-bottom:1px solid rgba(130,120,255,0.08);}
 .team-block .team-player:last-child{border-bottom:none;}
@@ -1218,18 +1222,28 @@ async function openMatchModal(eventId){
     const team2 = apps.filter(a => a.assigned_team === 'Команда 2');
     const others = apps.filter(a => a.assigned_team && a.assigned_team !== 'Команда 1' && a.assigned_team !== 'Команда 2');
 
-    const teamBlock = (name, players) => `
-      <div class="team-block">
+    const teamBlock = (name, players, extraClass) => `
+      <div class="team-block ${extraClass}">
         <div class="team-name">${name}</div>
         ${players.length
           ? players.map(p => `<div class="team-player">${p.discord_username}${p.assigned_time ? ` <span style="color:var(--text-dim); font-size:11px;">· ${p.assigned_time}</span>` : ''}</div>`).join('')
           : `<div class="team-player" style="color:var(--text-faint);">Пока никто не назначен</div>`}
       </div>`;
 
+    // Если результат уже внесён — подсвечиваем победителя зелёным, проигравшего красным
+    let team1Class = '', team2Class = '';
+    if(event.result && event.result.includes('-')){
+      const [s1, s2] = event.result.split('-').map(n => parseInt(n.trim(), 10));
+      if(!isNaN(s1) && !isNaN(s2) && s1 !== s2){
+        team1Class = s1 > s2 ? 'winner' : 'loser';
+        team2Class = s2 > s1 ? 'winner' : 'loser';
+      }
+    }
+
     lineupEl.innerHTML = `
       <div class="two-teams-grid">
-        ${teamBlock('Команда 1', team1)}
-        ${teamBlock('Команда 2', team2)}
+        ${teamBlock('Команда 1', team1, team1Class)}
+        ${teamBlock('Команда 2', team2, team2Class)}
       </div>
       ${others.length ? `<div style="margin-top:10px;"><div style="color:var(--text-dim); font-size:11.5px; margin-bottom:6px;">Другое:</div>${others.map(p=>`<div class="team-player">${p.assigned_team}: ${p.discord_username}</div>`).join('')}</div>` : ''}
     `;
@@ -1541,9 +1555,11 @@ function eventBannerHtml(event, fallbackIcon){
   const src = eventBannerSrc(event);
   const modeIcon = modeIconPath(event.mode);
   const modeIconHtml = modeIcon
-    ? `<img src="${modeIcon}" alt="" style="position:absolute; top:8px; right:8px; width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">`
+    ? `<div style="position:absolute; top:8px; right:8px; width:38px; height:38px; border-radius:10px; background:rgba(10,10,20,.72); border:1px solid rgba(255,255,255,.15); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center;">
+         <img src="${modeIcon}" alt="" style="width:26px; height:26px; object-fit:contain;" onerror="this.parentElement.style.display='none'">
+       </div>`
     : '';
-  const bg = src ? `<img src="${src}" alt="" style="width:100%; height:100%; object-fit:cover;">` : fallbackIcon;
+  const bg = src ? `<img src="${src}" alt="" style="width:100%; height:100%; object-fit:contain;">` : fallbackIcon;
   return `${bg}${modeIconHtml}`;
 }
 
