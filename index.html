@@ -771,7 +771,7 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
         <span id="newEvImageName" style="color:var(--text-dim); font-size:11.5px; margin-left:8px;"></span>
       </div>
       <div class="full" id="fixedImageHint" style="display:none; color:var(--text-dim); font-size:11.5px;">
-        Для формата 3×3/5×5 используется фиксированная картинка (img/3x3.png / img/5x5.png) — загружать не нужно.
+        Для формата 3×3/5×5 используется фиксированная картинка (img/3x3.jpg / img/5x5.jpg) — загружать не нужно.
       </div>
       <div class="full">
         <label class="file-input-label">🎬 Загрузить видео (необязательно)<input type="file" id="newEvVideoFile" accept="video/*"></label>
@@ -1774,7 +1774,7 @@ async function submitNewEvent(){
   btn.disabled = true;
   btn.textContent = editingId ? 'Сохраняем...' : 'Создаём...';
   try{
-    // картинку загружаем только для турнира — у 3×3/5×5 она фиксированная (img/3x3.png, img/5x5.png)
+    // картинку загружаем только для турнира — у 3×3/5×5 она фиксированная (img/3x3.jpg, img/5x5.jpg)
     let image_url = format === 'tournament' ? undefined : null;
     let video_url = videoLink || null;
 
