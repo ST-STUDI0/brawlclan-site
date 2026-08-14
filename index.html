@@ -297,6 +297,23 @@ nav button.active::after{
 .player-history-row .stat .win-n{color:var(--green); font-weight:800;}
 .player-history-row .stat .lose-n{color:var(--red); font-weight:800;}
 .player-history-row .winrate{font-family:var(--font-display); font-weight:800; font-size:13px; color:var(--gold-1); min-width:48px; text-align:right;}
+
+/* ---------- АКТИВНОСТЬ СОСТАВА (вступили/вышли) ---------- */
+.roster-activity-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;}
+.roster-activity-pills{display:flex; gap:8px;}
+.roster-pill{padding:5px 12px; border-radius:8px; font-family:var(--font-display); font-weight:800; font-size:12.5px;}
+.roster-pill.join{background:rgba(60,232,122,.14); color:var(--green);}
+.roster-pill.leave{background:rgba(255,77,109,.14); color:var(--red);}
+.roster-activity-section-title{font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin:16px 0 10px; display:flex; align-items:center; gap:6px;}
+.roster-activity-section-title.join{color:var(--green);}
+.roster-activity-section-title.leave{color:var(--red);}
+.roster-activity-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
+.roster-activity-card{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; border:1px solid;}
+.roster-activity-card.join{background:rgba(60,232,122,.07); border-color:rgba(60,232,122,.3);}
+.roster-activity-card.leave{background:rgba(255,77,109,.06); border-color:rgba(255,77,109,.28);}
+.roster-activity-card .name{font-weight:700; font-size:13.5px;}
+.roster-activity-card .trophies{font-size:12px; color:var(--gold-1); font-weight:700;}
+.roster-activity-card .time{font-size:10.5px; color:var(--text-faint); margin-left:auto;}
 .match-score{font-weight:800; font-size:14.5px; display:flex; align-items:center; gap:6px; min-width:70px; justify-content:center;}
 .match-time{color:var(--text-faint); font-size:12.5px; min-width:110px; text-align:right;}
 
@@ -677,6 +694,13 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
       <div class="mini-metric"><div class="v">62</div><div class="l">Побед в КЛ за сезон</div></div>
       <div class="mini-metric"><div class="v">67%</div><div class="l">Общий винрейт клана</div></div>
     </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 id="rosterActivityDate">📋 Активность состава</h2>
+    </div>
+    <div id="rosterActivityContent" style="color:var(--text-dim); font-size:13px;">Загрузка...</div>
   </div>
 
   <div class="grid-2">
@@ -2265,10 +2289,61 @@ async function loadRealData() {
     renderTopFighters();
     initCompareSelects();
     updateRadar();
+    loadRosterActivity();
 
     showToast("Статистика обновлена из Brawl Stars API ✅");
   } catch (err) {
     console.warn("Не удалось загрузить реальные данные, остаёмся на демо:", err);
+  }
+}
+
+// Блок "Активность состава" — кто вступил / кто вышел сегодня (сравнение с сохранённой историей на бэкенде)
+async function loadRosterActivity(){
+  const container = document.getElementById('rosterActivityContent');
+  const dateHeader = document.getElementById('rosterActivityDate');
+  if(!container) return;
+
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/roster/activity`);
+    if(!res.ok) throw new Error('fail');
+    const data = await res.json();
+
+    const dateLabel = new Date(data.date).toLocaleDateString('ru-RU', {day:'2-digit', month:'long'});
+    if(dateHeader) dateHeader.textContent = `📋 Активность состава · сегодня, ${dateLabel}`;
+
+    if(!data.joined.length && !data.left.length){
+      container.innerHTML = '<p style="color:var(--text-dim);">Сегодня изменений в составе не было.</p>';
+      return;
+    }
+
+    const card = (m, type) => `
+      <div class="roster-activity-card ${type}">
+        <div class="avatar" style="width:34px;height:34px;font-size:15px;">${avatarInner({ best:'👤', iconId: m.icon_id })}</div>
+        <div>
+          <div class="name">${m.name}</div>
+          <div class="trophies">🏆 ${(m.trophies || 0).toLocaleString('ru-RU')}</div>
+        </div>
+        <div class="time">${new Date(m.first_seen_at || m.left_at).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+      </div>`;
+
+    container.innerHTML = `
+      <div class="roster-activity-header">
+        <div class="roster-activity-pills">
+          <span class="roster-pill join">+${data.joined.length}</span>
+          <span class="roster-pill leave">-${data.left.length}</span>
+        </div>
+      </div>
+      ${data.joined.length ? `
+        <div class="roster-activity-section-title join">✅ ${data.joined.length} вступили</div>
+        <div class="roster-activity-grid">${data.joined.map(m => card(m, 'join')).join('')}</div>
+      ` : ''}
+      ${data.left.length ? `
+        <div class="roster-activity-section-title leave">🚪 ${data.left.length} покинули</div>
+        <div class="roster-activity-grid">${data.left.map(m => card(m, 'leave')).join('')}</div>
+      ` : ''}
+    `;
+  }catch(e){
+    container.innerHTML = '<p style="color:var(--text-dim);">Не удалось загрузить активность состава.</p>';
   }
 }
 
