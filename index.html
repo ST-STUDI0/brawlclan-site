@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family™ — #2U0U9L2PG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#07070f;
+  --bg-2:#0d0d1e;
+  --card:rgba(28,24,58,0.55);
+  --card-solid:#171432;
+  --stroke:rgba(130,120,255,0.16);
+  --stroke-strong:rgba(130,120,255,0.32);
+  --cyan:#2fd8ff;
+  --cyan-dim:rgba(47,216,255,0.14);
+  --gold-1:#ffd76a;
+  --gold-2:#ffa000;
+  --green:#3ce87a;
+  --red:#ff4d6d;
+  --text:#f5f5fb;
+  --text-dim:#9c9cc4;
+  --text-faint:#6c6a92;
+  --radius:18px;
+  --font-display:'Orbitron', sans-serif;
+  --font-body:'Manrope', sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+/* starfield background */
+#stars{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(1200px 700px at 15% -10%, rgba(80,50,180,0.35), transparent 60%),
+    radial-gradient(900px 600px at 100% 10%, rgba(47,216,255,0.14), transparent 55%),
+    radial-gradient(700px 500px at 50% 100%, rgba(255,160,0,0.08), transparent 60%),
+    var(--bg);
+}
+#stars canvas{position:absolute; inset:0; width:100%; height:100%;}
+.wrap{position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:0 28px;}
+
+/* ---------- HEADER ---------- */
+header{
+  position:sticky; top:0; z-index:50;
+  background:rgba(7,7,15,0.55);
+  backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--stroke);
+  transition:background .3s;
+}
+.header-inner{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 0;
+}
+.logo{display:flex; align-items:center; gap:12px; cursor:pointer;}
+.logo-badge{
+  width:42px; height:42px; border-radius:12px;
+  background:linear-gradient(145deg,var(--gold-1),var(--gold-2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; box-shadow:0 0 22px rgba(255,180,50,0.45);
+}
+.logo-text{font-family:var(--font-display); font-weight:800; font-size:16px; letter-spacing:1px; line-height:1.1;}
+.logo-text span{display:block; color:var(--cyan); font-size:11px; letter-spacing:3px;}
+.logo-text .gold-text{display:inline; color:transparent; font-size:inherit; letter-spacing:normal;}
+
+nav{display:flex; gap:4px;}
+nav button{
+  background:none; border:none; color:var(--text-dim);
+  font-family:var(--font-body); font-weight:600; font-size:14px;
+  padding:10px 16px; border-radius:10px; cursor:pointer;
+  letter-spacing:.2px; transition:all .2s; position:relative;
+}
+nav button:hover{color:var(--text); background:rgba(255,255,255,0.04);}
+nav button.active{color:var(--cyan);}
+nav button.active::after{
+  content:''; position:absolute; left:16px; right:16px; bottom:2px; height:2px;
+  background:var(--cyan); border-radius:2px; box-shadow:0 0 8px var(--cyan);
+}
+.btn-login{
+  display:flex; align-items:center; gap:8px;
+  border:1px solid var(--stroke-strong); color:var(--cyan);
+  background:var(--cyan-dim); padding:10px 18px; border-radius:12px;
+  font-weight:700; font-size:13.5px; cursor:pointer; transition:all .2s;
+}
+.btn-login:hover{background:rgba(47,216,255,0.24); box-shadow:0 0 18px rgba(47,216,255,0.3);}
+.burger{display:none; background:none; border:none; color:var(--text); font-size:22px; cursor:pointer;}
+
+/* ---------- GENERIC ---------- */
+.page{display:none; animation:fadeUp .5s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+
+.panel{
+  background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius);
+  padding:26px; margin-bottom:22px; backdrop-filter:blur(10px);
+}
+.panel-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+.panel-header h2{
+  font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; text-transform:uppercase;
+  display:flex; align-items:center; gap:10px; font-weight:700;
+}
+.panel-header a, .link-more{
+  color:var(--cyan); text-decoration:none; font-size:13px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; gap:4px;
+}
+.panel-header a:hover{text-shadow:0 0 10px var(--cyan);}
+.eyebrow{color:var(--text-faint); font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:700;}
+
+.badge{padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; display:inline-block;}
+.badge.leader{background:rgba(255,215,106,0.16); color:var(--gold-1); border:1px solid rgba(255,215,106,0.4);}
+.badge.co{background:rgba(47,216,255,0.16); color:var(--cyan); border:1px solid rgba(47,216,255,0.4);}
+.badge.vet{background:rgba(160,120,255,0.18); color:#c3aeff; border:1px solid rgba(160,120,255,0.4);}
+.badge.member{background:rgba(255,255,255,0.06); color:var(--text-dim); border:1px solid var(--stroke);}
+.badge.win{background:rgba(60,232,122,0.14); color:var(--green); border:1px solid rgba(60,232,122,0.4);}
+.badge.lose{background:rgba(255,77,109,0.14); color:var(--red); border:1px solid rgba(255,77,109,0.4);}
+
+.avatar{
+  width:44px; height:44px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:19px;
+  background:linear-gradient(145deg,#2a2358,#171432); border:2px solid var(--stroke-strong);
+  position:relative; overflow:hidden;
+}
+.avatar-emoji{position:relative; z-index:0; line-height:1;}
+.avatar-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;}
+.avatar.rank1{border-color:var(--gold-1); box-shadow:0 0 14px rgba(255,215,106,.4);}
+.avatar.rank2{border-color:var(--cyan);}
+.avatar.rank3{border-color:#c3aeff;}
+
+/* ---------- PODIUM (top-3) ---------- */
+.podium-wrap{display:flex; align-items:flex-end; justify-content:center; gap:16px; padding:26px 6px 4px; flex-wrap:wrap;}
+.podium-card{
+  background:var(--card); border:1px solid var(--stroke); border-radius:16px; width:150px;
+  text-align:center; padding:18px 12px 0; position:relative; transition:transform .2s;
+}
+.podium-card.first{
+  width:172px; border-color:rgba(255,215,106,.5); box-shadow:0 0 32px rgba(255,180,50,.16);
+  transform:translateY(-16px); padding-top:24px;
+}
+.podium-tag{
+  position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+  font-family:var(--font-display); font-weight:800; font-size:12.5px; color:var(--gold-1);
+  background:var(--bg-2); padding:2px 10px; border-radius:8px; border:1px solid rgba(255,215,106,.4);
+}
+.podium-name{
+  font-weight:700; font-size:13.5px; margin:10px 0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.podium-trophies{font-family:var(--font-display); font-weight:800; font-size:15px; color:var(--gold-1);}
+.podium-rank-bar{
+  margin:14px -13px 0; padding:9px; border-radius:0 0 15px 15px;
+  font-family:var(--font-display); font-weight:800; font-size:16px;
+}
+.podium-card.first .podium-rank-bar{margin:14px -21px 0;}
+.podium-rank-bar.r1{background:linear-gradient(135deg,var(--gold-1),var(--gold-2)); color:#241600;}
+.podium-rank-bar.r2{background:rgba(47,216,255,.18); color:var(--cyan);}
+.podium-rank-bar.r3{background:rgba(160,120,255,.18); color:#c3aeff;}
+
+.btn-primary, .btn-secondary{
+  border:none; cursor:pointer; font-weight:800; font-size:14px; letter-spacing:.3px;
+  padding:15px 26px; border-radius:14px; display:inline-flex; align-items:center; gap:9px;
+  transition:transform .15s, box-shadow .2s; font-family:var(--font-body);
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--gold-1),var(--gold-2)); color:#241600;
+  box-shadow:0 6px 22px rgba(255,160,0,0.28);
+}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 30px rgba(255,160,0,0.42);}
+.btn-secondary{
+  background:rgba(47,216,255,0.08); color:var(--cyan); border:1.5px solid rgba(47,216,255,0.5);
+}
+.btn-secondary:hover{transform:translateY(-2px); background:rgba(47,216,255,0.18); box-shadow:0 10px 26px rgba(47,216,255,0.25);}
+
+/* ---------- HERO ---------- */
+.hero{
+  padding:64px 0 40px; display:grid; grid-template-columns:1.15fr 0.85fr; gap:40px; align-items:center;
+}
+.hero-eyebrow{color:var(--cyan); font-family:var(--font-display); font-size:12px; letter-spacing:4px; margin-bottom:14px; display:flex; align-items:center; gap:10px;}
+.hero-eyebrow::before{content:''; width:26px; height:2px; background:var(--cyan); box-shadow:0 0 8px var(--cyan);}
+.clan-title{
+  font-family:var(--font-display); font-weight:900; font-size:clamp(38px,5.4vw,62px);
+  line-height:0.98; letter-spacing:.5px; text-transform:uppercase;
+}
+.clan-title .line2{
+  background:linear-gradient(120deg,var(--gold-1),var(--gold-2));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.gold-text{
+  background:linear-gradient(120deg,var(--gold-1),var(--gold-2));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.clan-tag{
+  display:inline-block; margin-top:18px; font-family:'Manrope'; font-weight:800; letter-spacing:2px;
+  color:var(--cyan); background:var(--cyan-dim); border:1px solid rgba(47,216,255,.35);
+  padding:7px 14px; border-radius:10px; font-size:14px;
+}
+.hero-chips{display:flex; gap:12px; margin:26px 0; flex-wrap:wrap;}
+.chip{
+  background:var(--card); border:1px solid var(--stroke); border-radius:14px; padding:12px 18px;
+  display:flex; align-items:center; gap:11px; min-width:150px;
+}
+.chip .ic{font-size:22px;}
+.chip .val{font-weight:800; font-size:19px; line-height:1;}
+.chip .lab{color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-top:3px;}
+.hero-cta{display:flex; gap:14px; flex-wrap:wrap;}
+.hero-visual{
+  position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+}
+.hero-ring{
+  position:absolute; width:88%; height:88%; border-radius:50%;
+  border:2px solid rgba(47,216,255,.35);
+  animation:spin 18s linear infinite;
+}
+.hero-ring::before, .hero-ring::after{
+  content:''; position:absolute; width:10px; height:10px; border-radius:50%;
+  background:var(--cyan); box-shadow:0 0 14px var(--cyan);
+}
+.hero-ring::before{top:-5px; left:50%; margin-left:-5px;}
+.hero-ring::after{bottom:-5px; left:50%; margin-left:-5px; background:var(--gold-1); box-shadow:0 0 14px var(--gold-1);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.hero-star{font-size:120px; filter:drop-shadow(0 0 40px rgba(255,190,60,.55));}
+.hero-star-img{width:62%; max-width:230px; filter:drop-shadow(0 0 40px rgba(170,100,255,.5)); animation:floaty 5s ease-in-out infinite;}
+@keyframes floaty{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
+.logo-badge img{border-radius:8px;}
+
+/* ---------- STAT GRID ---------- */
+.stats-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:22px;}
+.stat-card{
+  background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); padding:22px;
+  position:relative; overflow:hidden;
+}
+.stat-card .glow{position:absolute; width:120px; height:120px; border-radius:50%; filter:blur(40px); top:-40px; right:-30px; opacity:.5;}
+.stat-card .top-row{display:flex; align-items:center; gap:10px; color:var(--text-dim); font-size:12.5px; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:14px;}
+.stat-card .big{font-family:var(--font-display); font-size:34px; font-weight:800;}
+.stat-card .sub{color:var(--text-dim); font-size:12.5px; margin-top:6px;}
+.bar-bg{height:8px; background:rgba(255,255,255,.06); border-radius:6px; margin-top:12px; overflow:hidden;}
+.bar-fill{height:100%; border-radius:6px; background:linear-gradient(90deg,var(--green),#7cffb0);}
+
+/* ---------- LISTS ---------- */
+.player-row, .match-row{
+  display:flex; align-items:center; gap:16px; padding:13px 6px; border-bottom:1px solid var(--stroke);
+  transition:background .15s;
+}
+.player-row:hover, .match-row:hover{background:rgba(255,255,255,0.025); border-radius:10px;}
+.player-row:last-child, .match-row:last-child{border-bottom:none;}
+.p-rank{width:22px; text-align:center; color:var(--text-faint); font-weight:800; font-size:13px;}
+.p-name{font-weight:700; font-size:14.5px;}
+.p-meta{flex:1; display:flex; flex-direction:column; gap:4px;}
+.p-trophy{display:flex; align-items:center; gap:6px; font-weight:800; font-size:14.5px; min-width:90px; justify-content:flex-end;}
+.p-best{display:flex; align-items:center; gap:8px; color:var(--text-dim); font-size:12.5px; min-width:150px; justify-content:flex-end;}
+.p-best .bic{width:26px; height:26px; border-radius:8px; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; font-size:14px; position:relative; overflow:hidden; flex-shrink:0;}
+.bic{position:relative; overflow:hidden; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:26px; height:26px; border-radius:8px; vertical-align:middle;}
+.bic-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:8px; z-index:1;}
+.bic-emoji{position:relative; z-index:0; line-height:1;}
+.roster-table .bic{background:rgba(255,255,255,.06);}
+
+.match-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+.match-type{flex:1;}
+.match-type .t1{font-weight:700; font-size:14px;}
+.match-type .t2{color:var(--text-dim); font-size:12px;}
+.match-score{font-weight:800; font-size:14.5px; display:flex; align-items:center; gap:6px; min-width:70px; justify-content:center;}
+.match-time{color:var(--text-faint); font-size:12.5px; min-width:110px; text-align:right;}
+
+/* ---------- CHART CONTAINER ---------- */
+.chart-box{position:relative; height:300px;}
+.period-switch{display:flex; gap:6px; background:rgba(255,255,255,.04); padding:4px; border-radius:10px;}
+.period-switch button{background:none; border:none; color:var(--text-dim); font-size:12px; font-weight:700; padding:7px 14px; border-radius:8px; cursor:pointer;}
+.period-switch button.active{background:var(--cyan); color:#031018;}
+
+/* ---------- ROSTER PAGE ---------- */
+.roster-controls{display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:20px;}
+.search-box{
+  flex:1; min-width:220px; display:flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,0.04); border:1px solid var(--stroke); border-radius:12px; padding:11px 16px;
+}
+.search-box input{background:none; border:none; outline:none; color:var(--text); font-family:var(--font-body); font-size:14px; width:100%;}
+.search-box input::placeholder{color:var(--text-faint);}
+.role-filters{display:flex; gap:8px; flex-wrap:wrap;}
+.role-filters button{
+  background:rgba(255,255,255,.04); border:1px solid var(--stroke); color:var(--text-dim);
+  padding:9px 15px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; transition:all .15s;
+}
+.role-filters button.active{background:var(--cyan-dim); border-color:var(--cyan); color:var(--cyan);}
+select.sort-select{
+  background:rgba(255,255,255,.04); border:1px solid var(--stroke); color:var(--text); border-radius:10px;
+  padding:10px 14px; font-family:var(--font-body); font-size:12.5px; font-weight:700; cursor:pointer;
+}
+
+.roster-table{width:100%; border-collapse:collapse;}
+.roster-table thead th{
+  text-align:left; color:var(--text-faint); font-size:11px; text-transform:uppercase; letter-spacing:1px;
+  padding:10px 8px; border-bottom:1px solid var(--stroke); font-weight:700;
+}
+.roster-table thead th.sortable{cursor:pointer; user-select:none;}
+.roster-table thead th.sortable:hover{color:var(--cyan);}
+.roster-table tbody td{padding:12px 8px; border-bottom:1px solid rgba(130,120,255,0.08); vertical-align:middle;}
+.roster-table tbody tr{cursor:pointer; transition:background .15s;}
+.roster-table tbody tr:hover{background:rgba(255,255,255,0.03);}
+.name-cell{display:flex; align-items:center; gap:12px;}
+.online-dot{width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); display:inline-block; margin-right:6px;}
+.offline-dot{width:8px; height:8px; border-radius:50%; background:var(--text-faint); display:inline-block; margin-right:6px;}
+.winrate-wrap{display:flex; align-items:center; gap:8px;}
+.winrate-track{width:60px; height:6px; border-radius:4px; background:rgba(255,255,255,.06); overflow:hidden;}
+.winrate-fill{height:100%; background:linear-gradient(90deg,var(--cyan),#7ff0ff); border-radius:4px;}
+
+/* ---------- MODAL ---------- */
+.modal-overlay{
+  display:none; position:fixed; inset:0; background:rgba(4,4,10,0.72); backdrop-filter:blur(6px);
+  z-index:200; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.active{display:flex;}
+.modal-box{
+  background:var(--card-solid); border:1px solid var(--stroke-strong); border-radius:22px;
+  max-width:480px; width:100%; padding:30px; position:relative; animation:fadeUp .3s ease;
+}
+.modal-close{position:absolute; top:18px; right:18px; background:rgba(255,255,255,.06); border:none; color:var(--text); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:16px;}
+.modal-head{display:flex; align-items:center; gap:16px; margin-bottom:20px;}
+.modal-head .avatar{width:64px; height:64px; font-size:28px;}
+.modal-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:18px 0;}
+.mini-stat{background:rgba(255,255,255,.03); border:1px solid var(--stroke); border-radius:12px; padding:12px 14px;}
+.mini-stat .v{font-weight:800; font-size:18px;}
+.mini-stat .l{color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:.5px; margin-top:2px;}
+.brawler-chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.brawler-chip{background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:10px; padding:6px 10px; font-size:12px; display:flex; align-items:center; gap:6px;}
+.brawler-chip .bic{width:20px; height:20px; border-radius:6px; position:relative; overflow:hidden; flex-shrink:0;}
+
+/* ---------- STATS PAGE EXTRAS ---------- */
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+.grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+.mini-metric{background:var(--card); border:1px solid var(--stroke); border-radius:14px; padding:18px;}
+.mini-metric .v{font-family:var(--font-display); font-size:24px; font-weight:800;}
+.mini-metric .l{color:var(--text-dim); font-size:11.5px; margin-top:6px;}
+.compare-selects{display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;}
+.compare-selects select{background:rgba(255,255,255,.04); border:1px solid var(--stroke); color:var(--text); border-radius:10px; padding:10px 14px; font-family:var(--font-body); font-weight:700; font-size:13px;}
+select option{background:#171432; color:#f5f5fb;}
+.map-row{display:flex; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid rgba(130,120,255,0.08);}
+.map-row:last-child{border-bottom:none;}
+.map-name{width:130px; font-weight:700; font-size:13.5px;}
+.map-bar-track{flex:1; height:9px; border-radius:5px; background:rgba(255,255,255,.06); overflow:hidden;}
+.map-bar-fill{height:100%; border-radius:5px; background:linear-gradient(90deg,var(--green),#7cffb0);}
+.map-pct{width:44px; text-align:right; font-weight:800; font-size:13px;}
+
+/* ---------- CLUB LEAGUE ---------- */
+.season-banner{
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px;
+  background:linear-gradient(120deg, rgba(47,216,255,0.08), rgba(255,160,0,0.06));
+  border:1px solid var(--stroke-strong); border-radius:var(--radius); padding:26px; margin-bottom:22px;
+}
+.season-left .eyebrow{margin-bottom:6px;}
+.season-left h2{font-family:var(--font-display); font-size:22px;}
+.season-score{display:flex; align-items:baseline; gap:10px; margin-top:8px;}
+.season-score .n{font-family:var(--font-display); font-size:38px; font-weight:900; color:var(--gold-1);}
+.countdown{display:flex; gap:10px;}
+.countdown .box{background:rgba(255,255,255,.05); border:1px solid var(--stroke); border-radius:10px; padding:10px 14px; text-align:center; min-width:56px;}
+.countdown .box .n{font-family:var(--font-display); font-weight:800; font-size:20px;}
+.countdown .box .l{font-size:9.5px; color:var(--text-dim); text-transform:uppercase; margin-top:2px;}
+
+.lineup-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px;}
+.lineup-card{background:rgba(255,255,255,.03); border:1px solid var(--stroke); border-radius:14px; padding:14px; display:flex; align-items:center; gap:12px;}
+.lineup-status{margin-left:auto; font-size:16px;}
+
+.status-pill{padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800;}
+.status-pill.upcoming{background:rgba(47,216,255,0.14); color:var(--cyan);}
+.status-pill.live{background:rgba(255,160,0,0.16); color:var(--gold-1);}
+.status-pill.done{background:rgba(255,255,255,0.06); color:var(--text-dim);}
+
+/* ---------- EVENTS ---------- */
+.events-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px;}
+.event-card{
+  background:var(--card); border:1px solid var(--stroke); border-radius:18px; overflow:hidden;
+  transition:transform .2s, box-shadow .2s;
+}
+.event-card:hover{transform:translateY(-4px); box-shadow:0 14px 34px rgba(47,216,255,0.12);}
+.event-banner{height:110px; display:flex; align-items:center; justify-content:center; font-size:44px; position:relative;}
+.event-banner.b1{background:linear-gradient(135deg,#2a1f5c,#3d2a7a);}
+.event-banner.b2{background:linear-gradient(135deg,#1f3f5c,#2a5a7a);}
+.event-banner.b3{background:linear-gradient(135deg,#5c2a3f,#7a2a4f);}
+.event-body{padding:18px;}
+.event-body h3{font-family:var(--font-display); font-size:14.5px; margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;}
+.event-body .meta{color:var(--text-dim); font-size:12.5px; margin-bottom:14px; display:flex; gap:14px; flex-wrap:wrap;}
+.event-countdown{font-size:12px; color:var(--gold-1); font-weight:800; margin-bottom:14px;}
+
+.recruit-box{display:grid; grid-template-columns:1fr 1fr; gap:26px;}
+.req-list{list-style:none;}
+.req-list li{display:flex; align-items:center; gap:10px; padding:9px 0; font-size:14px; color:var(--text-dim); border-bottom:1px solid rgba(130,120,255,0.08);}
+.req-list li:last-child{border-bottom:none;}
+.req-list li .check{color:var(--green);}
+.apply-form{display:flex; flex-direction:column; gap:12px;}
+.apply-form input, .apply-form textarea{
+  background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:12px; padding:13px 16px;
+  color:var(--text); font-family:var(--font-body); font-size:14px; outline:none;
+}
+.apply-form input:focus, .apply-form textarea:focus{border-color:var(--cyan);}
+.apply-form textarea{resize:vertical; min-height:80px;}
+
+/* ---------- GALLERY ---------- */
+.gallery-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px;}
+.gallery-item{
+  aspect-ratio:4/3; border-radius:14px; border:1px solid var(--stroke);
+  display:flex; align-items:center; justify-content:center; font-size:40px; cursor:pointer;
+  transition:transform .2s;
+}
+.gallery-item:hover{transform:scale(1.03);}
+
+/* ---------- FOOTER ---------- */
+footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; color:var(--text-faint); font-size:12.5px; text-align:center;}
+
+/* ---------- TOAST ---------- */
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); z-index:300;
+  background:var(--card-solid); border:1px solid var(--stroke-strong); border-radius:12px; padding:14px 22px;
+  font-size:13.5px; font-weight:700; opacity:0; pointer-events:none; transition:all .3s;
+  display:flex; align-items:center; gap:10px;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr; padding-top:36px;}
+  .hero-visual{max-width:280px; margin:0 auto;}
+  .stats-grid, .grid-2, .grid-4{grid-template-columns:1fr;}
+  nav{display:none;}
+  .burger{display:block;}
+  .recruit-box{grid-template-columns:1fr;}
+}
+@media(max-width:980px){
+  nav.mobile-open{
+    display:flex; flex-direction:column; position:absolute; top:100%; left:0; right:0;
+    background:rgba(7,7,15,0.97); border-bottom:1px solid var(--stroke); padding:10px 20px 18px;
+  }
+}
+@media(max-width:640px){
+  .p-best{display:none;}
+  .match-time{min-width:70px; font-size:11px;}
+  .roster-table thead th:nth-child(4), .roster-table tbody td:nth-child(4){display:none;}
+}
+::-webkit-scrollbar{width:10px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--stroke-strong); border-radius:6px;}
+</style>
+</head>
+<body>
+<div id="stars"><canvas id="starsCanvas"></canvas></div>
+
+<header>
+  <div class="wrap header-inner">
+    <div class="logo" onclick="goTo('home')">
+      <div class="logo-badge" style="background:none; box-shadow:none; padding:2px;"><img src="img/logo2.png" alt="Логотип клана" style="width:100%; height:100%; object-fit:contain;"></div>
+      <div class="logo-text">FAMILY<span class="gold-text">™</span><span>BRAWL STARS CLAN</span></div>
+    </div>
+    <nav id="mainNav">
+      <button data-page="home" class="active">Главная</button>
+      <button data-page="roster">Состав</button>
+      <button data-page="stats">Статистика</button>
+      <button data-page="league">Клубная лига</button>
+      <button data-page="events">События</button>
+      <button data-page="gallery">Галерея</button>
+    </nav>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button class="btn-login" onclick="showToast('Вход через Discord — демо-режим')">
+        <span>👤</span> Войти
+      </button>
+      <button class="burger" onclick="document.getElementById('mainNav').classList.toggle('mobile-open')">☰</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ============ HOME ============ -->
+<section id="page-home" class="page active">
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow">ОТКРЫТЫЙ КЛАН · АКТИВНОСТЬ ПРЕВЫШЕ ВСЕГО</div>
+      <h1 class="clan-title">FAMILY<span class="line2">™</span></h1>
+      <div class="clan-tag">#2U0U9L2PG</div>
+      <div class="hero-chips">
+        <div class="chip"><div class="ic">🏆</div><div><div class="val">1 434 563</div><div class="lab">Кубков</div></div></div>
+        <div class="chip"><div class="ic">👥</div><div><div class="val">30/30</div><div class="lab">Участников</div></div></div>
+        <div class="chip"><div class="ic">🔑</div><div><div class="val">20 000</div><div class="lab">Мин. кубков для входа</div></div></div>
+      </div>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="showToast('Заявка отправлена в очередь на вступление ✨')">★ Вступить в клан</button>
+        <a class="btn-secondary" href="https://discord.gg/bjBCewggX" target="_blank" rel="noopener" style="text-decoration:none;"><img src="img/discord.png" alt="" style="width:28px; height:28px; object-fit:contain; border-radius:7px;"> Discord</a>
+        <a class="btn-secondary" href="https://t.me/+P57T21pOHDo1NGEy" target="_blank" rel="noopener" style="text-decoration:none;"><img src="img/telegram.png" alt="" style="width:28px; height:28px; object-fit:contain; border-radius:7px;"> Telegram</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-ring"></div>
+      <img class="hero-star-img" src="img/logo.png" alt="Логотип клана">
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>🏆 Лучшие участники</h2>
+      <a onclick="goTo('roster')">Смотреть все →</a>
+    </div>
+    <div class="podium-wrap" id="podiumWrap"></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="glow" style="background:var(--green);"></div>
+      <div class="top-row">💓 Активность сегодня</div>
+      <div class="big" id="activityBig">19</div>
+      <div class="sub" id="activitySub">демо-значение · нужен battlelog каждого игрока</div>
+    </div>
+    <div class="stat-card">
+      <div class="glow" style="background:var(--cyan);"></div>
+      <div class="top-row">🛡 Клубная лига</div>
+      <div class="big">4/5 <span style="font-size:16px; color:var(--text-dim);">побед</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:80%;"></div></div>
+      <div class="sub" style="margin-top:6px;">демо-значение · API не отдаёт агрегат КЛ</div>
+    </div>
+    <div class="stat-card">
+      <div class="glow" style="background:var(--gold-1);"></div>
+      <div class="top-row">📊 Средние кубки</div>
+      <div class="big">47 819</div>
+      <div class="sub">на игрока · реальные данные клана</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>👥 Состав клана</h2>
+      <a onclick="goTo('roster')">Смотреть весь состав →</a>
+    </div>
+    <div id="top5List"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>🕐 Последние матчи</h2>
+      <a onclick="goTo('league')">Смотреть все →</a>
+    </div>
+    <div id="recentMatches"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>📈 Динамика кубков</h2>
+      <div class="period-switch">
+        <button class="active" onclick="setPeriod(this,7)">7 дней</button>
+        <button onclick="setPeriod(this,30)">30 дней</button>
+        <button onclick="setPeriod(this,90)">Сезон</button>
+      </div>
+    </div>
+    <div class="chart-box"><canvas id="trophyChart"></canvas></div>
+  </div>
+</section>
+
+<!-- ============ ROSTER ============ -->
+<section id="page-roster" class="page">
+  <div class="panel">
+    <div class="panel-header"><h2>👥 Полный состав клана (28/30)</h2></div>
+    <div class="roster-controls">
+      <div class="search-box">🔍 <input id="rosterSearch" placeholder="Поиск по нику..." oninput="renderRoster()"></div>
+      <div class="role-filters" id="roleFilters">
+        <button class="active" data-role="all">Все</button>
+        <button data-role="leader">Лидер</button>
+        <button data-role="co">Со-лидер</button>
+        <button data-role="vet">Ветеран</button>
+        <button data-role="member">Участник</button>
+      </div>
+      <select class="sort-select" id="sortSelect" onchange="onSortSelectChange()">
+        <option value="trophies_desc">Кубки ↓</option>
+        <option value="trophies_asc">Кубки ↑</option>
+        <option value="name">Ник (А-Я)</option>
+        <option value="winrate">Винрейт КЛ</option>
+        <option value="activity">Последняя активность</option>
+      </select>
+    </div>
+    <table class="roster-table">
+      <thead>
+        <tr>
+          <th>Игрок</th><th>Роль</th><th class="sortable" id="trophySortHeader" onclick="toggleTrophySort()">Кубки ↓</th><th>Лучший бравлер</th><th>Винрейт КЛ</th><th>Активность</th>
+        </tr>
+      </thead>
+      <tbody id="rosterBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section id="page-stats" class="page">
+  <div class="panel">
+    <div class="panel-header"><h2>📊 Общая статистика клана</h2></div>
+    <div class="grid-4">
+      <div class="mini-metric"><div class="v">87 450</div><div class="l">Суммарные кубки</div></div>
+      <div class="mini-metric"><div class="v">3 123</div><div class="l">Средние кубки/игрока</div></div>
+      <div class="mini-metric"><div class="v">62</div><div class="l">Побед в КЛ за сезон</div></div>
+      <div class="mini-metric"><div class="v">67%</div><div class="l">Общий винрейт клана</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header"><h2>🏅 Топ бойцов клана</h2></div>
+      <div id="topFightersList"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h2>⚔️ Сравнение игроков</h2></div>
+      <div class="compare-selects">
+        <select id="cmp1" onchange="updateRadar()"></select>
+        <select id="cmp2" onchange="updateRadar()"></select>
+      </div>
+      <div class="chart-box" style="height:260px;"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>📈 Прогресс кубков (мульти-игрок)</h2>
+    </div>
+    <div class="chart-box"><canvas id="multiLineChart"></canvas></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header"><h2>🛡 Победы / поражения по сезонам</h2></div>
+      <div class="chart-box" style="height:240px;"><canvas id="wlChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h2>🗺 Лучшие карты клана</h2></div>
+      <div id="mapsList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLUB LEAGUE ============ -->
+<section id="page-league" class="page">
+  <div class="season-banner">
+    <div class="season-left">
+      <div class="eyebrow">Текущий сезон</div>
+      <h2>Клубная лига · Май 2026</h2>
+      <div class="season-score">
+        <span class="n">4/5</span>
+        <span style="color:var(--text-dim); font-size:13px;">побед · Лига «Мастер»</span>
+      </div>
+      <div class="bar-bg" style="width:220px;"><div class="bar-fill" style="width:80%;"></div></div>
+    </div>
+    <div class="countdown">
+      <div class="box"><div class="n">14</div><div class="l">часов</div></div>
+      <div class="box"><div class="n">22</div><div class="l">минуты</div></div>
+      <div class="box"><div class="n">08</div><div class="l">секунды</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>📅 Расписание матчей</h2></div>
+    <div id="scheduleList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>🧩 Состав на ближайшие бои <span style="color:var(--text-dim); font-weight:600; font-size:12px;">(18 из 30 слотов выбрано)</span></h2></div>
+    <div class="lineup-grid" id="lineupGrid"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>🕘 История матчей</h2></div>
+    <div id="historyList"></div>
+  </div>
+</section>
+
+<!-- ============ EVENTS ============ -->
+<section id="page-events" class="page">
+  <div class="panel">
+    <div class="panel-header"><h2>🎉 Предстоящие турниры и челленджи</h2></div>
+    <div class="events-grid" id="eventsGrid"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>📝 Набор в клан</h2></div>
+    <div class="recruit-box">
+      <div>
+        <ul class="req-list">
+          <li><span class="check">✔</span> Минимум 20 000 личных кубков</li>
+          <li><span class="check">✔</span> Обязательное участие в Клубной лиге</li>
+          <li><span class="check">✔</span> Активность не реже 3 раз в неделю</li>
+          <li><span class="check">✔</span> Возраст 14+, доброжелательное общение</li>
+          <li><span class="check">✔</span> Подписка на Discord-сервер клана</li>
+        </ul>
+      </div>
+      <form class="apply-form" onsubmit="event.preventDefault(); showToast('Заявка отправлена! Ответ в Discord 🎯');">
+        <input placeholder="Игровой ник" required>
+        <input placeholder="Тег игрока (#XXXXXXX)" required>
+        <input placeholder="Текущие кубки" type="number" required>
+        <textarea placeholder="Коротко о себе"></textarea>
+        <button type="submit" class="btn-primary" style="justify-content:center;">Подать заявку</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GALLERY ============ -->
+<section id="page-gallery" class="page">
+  <div class="panel">
+    <div class="panel-header"><h2>🖼 Галерея клана</h2></div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+</section>
+
+</div>
+
+<footer class="wrap">
+  © 2026 Family™ 
+</footer>
+
+<!-- Player modal -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal-box" id="playerModalContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ STARFIELD ============ */
+(function(){
+  const canvas = document.getElementById('starsCanvas');
+  const ctx = canvas.getContext('2d');
+  let w,h,stars=[];
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    stars = Array.from({length:120}, ()=>({
+      x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.4+0.3,
+      s:Math.random()*0.3+0.05, o:Math.random()*0.6+0.2
+    }));
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    stars.forEach(st=>{
+      st.y += st.s;
+      if(st.y>h){st.y=0; st.x=Math.random()*w;}
+      ctx.beginPath();
+      ctx.arc(st.x,st.y,st.r,0,7);
+      ctx.fillStyle = `rgba(200,200,255,${st.o})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);
+  resize(); draw();
+})();
+
+/* ============ NAVIGATION ============ */
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  document.getElementById('mainNav').classList.remove('mobile-open');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('nav button[data-page]').forEach(b=>{
+  b.addEventListener('click', ()=>goTo(b.dataset.page));
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* ============ DEMO DATA ============ */
+const BRAWLERS = ['🐊','🐸','🦊','🐙','😈','🦉','🐺','🦅','🐲','🦁','🐯','🦂'];
+const ROLES = {leader:{label:'Лидер',cls:'leader'}, co:{label:'Со-лидер',cls:'co'}, vet:{label:'Ветеран',cls:'vet'}, member:{label:'Участник',cls:'member'}};
+
+const PLAYERS = [
+  {name:"SK|#психоз", role:"co", trophies:94459, best:"🐙", bestT:1134, winrate:74, activity:"В сети", online:true, joined:"12 янв 2025", iconId:28001221},
+  {name:"[EPA]Ykpoll", role:"leader", trophies:90911, best:"🐸", bestT:1091, winrate:61, activity:"1 час назад", online:false, joined:"03 фев 2025", iconId:28000757},
+  {name:"FLAMEWALL🔥", role:"co", trophies:81148, best:"🦊", bestT:974, winrate:63, activity:"3 часа назад", online:false, joined:"19 мар 2025", iconId:28000023},
+  {name:"[EPA]Burmalda", role:"co", trophies:72793, best:"🐺", bestT:874, winrate:73, activity:"Вчера", online:false, joined:"27 апр 2025", iconId:28001107},
+  {name:"Nazar зажигалка", role:"co", trophies:70471, best:"🦁", bestT:846, winrate:61, activity:"В сети", online:true, joined:"14 май 2025", iconId:28000771},
+  {name:"SG|ILYHAN", role:"vet", trophies:63632, best:"🦂", bestT:764, winrate:47, activity:"В сети", online:false, joined:"02 июн 2025", iconId:28000156},
+  {name:"須緒美ŧøükô?(:🍀", role:"member", trophies:62980, best:"🦅", bestT:756, winrate:60, activity:"1 час назад", online:false, joined:"21 июл 2025", iconId:28000060},
+  {name:"BS|Jille😶‍🌫️", role:"member", trophies:62119, best:"🐺", bestT:745, winrate:74, activity:"3 часа назад", online:false, joined:"09 авг 2025", iconId:28000257},
+  {name:"lukkugamer", role:"member", trophies:52329, best:"🐊", bestT:628, winrate:49, activity:"В сети", online:true, joined:"12 янв 2025", iconId:28000584},
+  {name:"🩸shadik🩸", role:"member", trophies:49887, best:"🐲", bestT:599, winrate:57, activity:"2 дня назад", online:false, joined:"03 фев 2025", iconId:28001314},
+  {name:"Psycho?|zOx1ny™", role:"co", trophies:49213, best:"🐊", bestT:591, winrate:48, activity:"В сети", online:false, joined:"19 мар 2025", iconId:28001314},
+  {name:"Broken Angel", role:"member", trophies:48953, best:"🐊", bestT:587, winrate:68, activity:"1 час назад", online:false, joined:"27 апр 2025", iconId:28001083},
+  {name:"скарєкс碁夢🌍", role:"member", trophies:45754, best:"🐯", bestT:549, winrate:54, activity:"В сети", online:true, joined:"14 май 2025", iconId:28000534},
+  {name:"Костя", role:"co", trophies:45031, best:"🐺", bestT:540, winrate:66, activity:"Вчера", online:false, joined:"02 июн 2025", iconId:28001240},
+  {name:"FS | Iskabraz😍", role:"member", trophies:42035, best:"🦉", bestT:504, winrate:45, activity:"2 дня назад", online:false, joined:"21 июл 2025", iconId:28000023},
+  {name:"ovosh", role:"member", trophies:41594, best:"🦅", bestT:499, winrate:59, activity:"В сети", online:false, joined:"09 авг 2025", iconId:28000019},
+  {name:"YT_XILEF", role:"member", trophies:41480, best:"🐲", bestT:498, winrate:50, activity:"В сети", online:true, joined:"12 янв 2025", iconId:28000213},
+  {name:"Рыжик", role:"co", trophies:40100, best:"🦅", bestT:481, winrate:70, activity:"3 часа назад", online:false, joined:"03 фев 2025", iconId:28000095},
+  {name:"QLS|TOPER🥀", role:"member", trophies:39010, best:"🐯", bestT:468, winrate:65, activity:"Вчера", online:false, joined:"19 мар 2025", iconId:28000912},
+  {name:"Kristina", role:"member", trophies:38402, best:"🦁", bestT:461, winrate:52, activity:"2 дня назад", online:false, joined:"27 апр 2025", iconId:28000831},
+  {name:"nesta_a1", role:"member", trophies:36925, best:"🐊", bestT:443, winrate:45, activity:"В сети", online:true, joined:"14 май 2025", iconId:28000297},
+  {name:"Холодильник", role:"member", trophies:35740, best:"🐯", bestT:429, winrate:50, activity:"1 час назад", online:false, joined:"02 июн 2025", iconId:28000003},
+  {name:"олег", role:"member", trophies:33548, best:"🐸", bestT:403, winrate:63, activity:"3 часа назад", online:false, joined:"21 июл 2025", iconId:28001301},
+  {name:"qiwera|ww", role:"member", trophies:32764, best:"🐙", bestT:393, winrate:49, activity:"Вчера", online:false, joined:"09 авг 2025", iconId:28001238},
+  {name:"Darkhat", role:"member", trophies:31875, best:"🦅", bestT:382, winrate:70, activity:"В сети", online:true, joined:"12 янв 2025", iconId:28000573},
+  {name:"Pro Dragon HZ", role:"member", trophies:30321, best:"🐺", bestT:364, winrate:56, activity:"В сети", online:false, joined:"03 фев 2025", iconId:28000207},
+  {name:"Тама тама", role:"vet", trophies:27912, best:"🐲", bestT:335, winrate:62, activity:"1 час назад", online:false, joined:"19 мар 2025", iconId:28001240},
+  {name:"овалка", role:"member", trophies:26616, best:"🐸", bestT:319, winrate:61, activity:"3 часа назад", online:false, joined:"27 апр 2025", iconId:28001240},
+  {name:"[EPA]Ykpollik", role:"co", trophies:23650, best:"🦁", bestT:284, winrate:70, activity:"В сети", online:true, joined:"14 май 2025", iconId:28001286},
+  {name:"Lucas_225", role:"member", trophies:22911, best:"🐲", bestT:275, winrate:66, activity:"2 дня назад", online:false, joined:"02 июн 2025", iconId:28001306},
+];
+
+const MATCHES = [
+  {type:'Клубная лига', icon:'🛡', color:'var(--cyan)', win:true, score:'3–1', time:'Сегодня, 18:42'},
+  {type:'Клубная лига', icon:'🛡', color:'var(--cyan)', win:true, score:'2–0', time:'Сегодня, 17:31'},
+  {type:'Клубная лига', icon:'🛡', color:'var(--gold-1)', win:false, score:'0–2', time:'Сегодня, 16:05'},
+  {type:'Событие: Нокаут', icon:'💀', color:'var(--red)', win:true, score:'2–1', time:'Вчера, 21:14'},
+  {type:'Событие: Захват кристаллов', icon:'💎', color:'#c3aeff', win:false, score:'1–3', time:'Вчера, 19:58'},
+];
+
+const SCHEDULE = [
+  {day:'День 5', opponent:'Клан «Тёмная Орда»', status:'live', time:'Сегодня, 20:00'},
+  {day:'День 6', opponent:'Клан «Северный Ветер»', status:'upcoming', time:'Завтра, 20:00'},
+  {day:'День 7 (финал)', opponent:'Клан «Огненный Шторм»', status:'upcoming', time:'17 авг, 20:00'},
+];
+
+const HISTORY = [
+  {date:'12 авг', map:'Скалистая теснина', opponent:'Ice Dragons', result:'win', score:'3–0'},
+  {date:'11 авг', map:'Заводской пресс', opponent:'Neon Wolves', result:'win', score:'2–1'},
+  {date:'10 авг', map:'Открытая местность', opponent:'Shadow Realm', result:'lose', score:'1–2'},
+  {date:'09 авг', map:'Пуленепробиваемый', opponent:'Golden Hawks', result:'win', score:'3–1'},
+  {date:'08 авг', map:'Двойной удар', opponent:'Storm Riders', result:'win', score:'2–0'},
+];
+
+const EVENTS = [
+  {icon:'🏆', banner:'b1', title:'Клубный турнир «Звёздный кубок»', date:'20 авг, 19:00', mode:'Нокаут', countdown:'через 6 дней'},
+  {icon:'💥', banner:'b2', title:'Гранд-финал сезона Клубной лиги', date:'25 авг, 20:00', mode:'Клубная лига', countdown:'через 11 дней'},
+  {icon:'🎯', banner:'b3', title:'Челлендж «100 побед подряд»', date:'до 31 авг', mode:'Захват кристаллов', countdown:'осталось 17 дней'},
+];
+
+const MAPS = [
+  {name:'Скалистая теснина', pct:82},
+  {name:'Пуленепробиваемый', pct:74},
+  {name:'Двойной удар', pct:69},
+  {name:'Заводской пресс', pct:58},
+  {name:'Открытая местность', pct:41},
+];
+
+/* ============ RENDER: TOP 5 (home) ============ */
+function trophyIcon(){ return '🏆'; }
+function avatarInner(p){
+  return `<span class="avatar-emoji">${p.best}</span><img class="avatar-img" src="https://cdn.brawlify.com/profile-icons/regular/${p.iconId}.png" alt="" onerror="this.style.display='none'">`;
+}
+// Соответствие эмодзи-заглушек реальным ID бравлеров (Brawl Stars, через api.brawlapi.com)
+const EMOJI_TO_BRAWLER = {
+  '🐊': 16000062, // Buster
+  '🐸': 16000063, // Chester
+  '🦊': 16000064, // Gray
+  '🐙': 16000065, // Mandy
+  '😈': 16000066, // R-T
+  '🦉': 16000067, // Willow
+  '🐺': 16000071, // Doug
+  '🦅': 16000075, // Mico
+  '🐲': 16000076, // Kit
+  '🦁': 16000080, // Draco
+  '🐯': 16000082, // Berry
+  '🦂': 16000000, // Shelly
+};
+function brawlerIconInner(emoji){
+  const id = EMOJI_TO_BRAWLER[emoji];
+  if(!id) return emoji;
+  return `<span class="bic-emoji">${emoji}</span><img class="bic-img" src="https://cdn.brawlify.com/brawlers/borders/${id}.png" alt="" onerror="this.style.display='none'">`;
+}
+// Показывает настоящую картинку лучшего бравлера игрока (по его настоящему ID), если она есть;
+// иначе — старую демо-заглушку (12 фиксированных бравлеров, выбранных по хэшу ника)
+function bestBrawlerIconInner(p){
+  if(p.bestBrawlerId){
+    return `<span class="bic-emoji">${p.best}</span><img class="bic-img" src="https://cdn.brawlify.com/brawlers/borders/${p.bestBrawlerId}.png" alt="" onerror="this.style.display='none'">`;
+  }
+  return brawlerIconInner(p.best);
+}
+function renderTop5(){
+  const top5 = [...PLAYERS].sort((a,b)=>b.trophies-a.trophies).slice(0,5);
+  const wrap = document.getElementById('top5List');
+  wrap.innerHTML = top5.map((p,i)=>`
+    <div class="player-row" onclick="openPlayer('${p.name}')">
+      <div class="p-rank">${i===0?'👑':i+1}</div>
+      <div class="avatar rank${i<3?i+1:''}">${avatarInner(p)}</div>
+      <div class="p-meta">
+        <div class="p-name">${p.name}</div>
+        <span class="badge ${ROLES[p.role].cls}">${ROLES[p.role].label}</span>
+      </div>
+      <div class="p-trophy">🏆 ${p.trophies.toLocaleString('ru-RU')}</div>
+      <div class="p-best"><span class="bic">${bestBrawlerIconInner(p)}</span> Лучший бравлер · 🏆 ${p.bestT}</div>
+    </div>
+  `).join('');
+}
+
+/* ============ RENDER: PODIUM (top-3) ============ */
+function renderPodium(){
+  const top3 = [...PLAYERS].sort((a,b)=>b.trophies-a.trophies).slice(0,3);
+  const order = [top3[1], top3[0], top3[2]]; // 2-е, 1-е, 3-е места слева направо
+  const ranks = [2, 1, 3];
+  document.getElementById('podiumWrap').innerHTML = order.map((p, idx) => {
+    const rank = ranks[idx];
+    const isFirst = rank === 1;
+    const size = isFirst ? 76 : 60;
+    return `
+      <div class="podium-card ${isFirst ? 'first' : ''}" onclick="openPlayer('${p.name.replace(/'/g,"\\'")}')">
+        ${isFirst ? '<div class="podium-tag">#1</div>' : ''}
+        <div class="avatar rank${rank===1?1:rank===2?2:3}" style="width:${size}px; height:${size}px; font-size:${Math.round(size*0.42)}px; margin:0 auto;">${avatarInner(p)}</div>
+        <div class="podium-name">${p.name}</div>
+        <div class="podium-trophies">🏆 ${(p.trophies/1000).toFixed(1)}K</div>
+        <div class="podium-rank-bar r${rank}">${rank}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ============ RENDER: recent matches ============ */
+function renderMatches(){
+  document.getElementById('recentMatches').innerHTML = MATCHES.map(m=>`
+    <div class="match-row">
+      <div class="match-icon" style="background:${m.color}22; color:${m.color};">${m.icon}</div>
+      <div class="match-type"><div class="t1">${m.type}</div></div>
+      <span class="badge ${m.win?'win':'lose'}">${m.win?'ПОБЕДА':'ПОРАЖЕНИЕ'}</span>
+      <div class="match-score">${m.win?'🏆':'💀'} ${m.score}</div>
+      <div class="match-time">${m.time}</div>
+    </div>
+  `).join('');
+}
+
+/* ============ RENDER: ROSTER ============ */
+let activeRole = 'all';
+document.getElementById('roleFilters').addEventListener('click', e=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('#roleFilters button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  activeRole = e.target.dataset.role;
+  renderRoster();
+});
+
+// Клик по заголовку "Кубки" переключает направление сортировки туда-обратно
+let trophySortDir = 'desc';
+function toggleTrophySort(){
+  trophySortDir = trophySortDir === 'desc' ? 'asc' : 'desc';
+  document.getElementById('sortSelect').value = trophySortDir === 'desc' ? 'trophies_desc' : 'trophies_asc';
+  document.getElementById('trophySortHeader').textContent = trophySortDir === 'desc' ? 'Кубки ↓' : 'Кубки ↑';
+  renderRoster();
+}
+// Если сортировку меняют через выпадающий список — держим заголовок "Кубки" в синхроне
+function onSortSelectChange(){
+  const val = document.getElementById('sortSelect').value;
+  if(val === 'trophies_desc'){ trophySortDir = 'desc'; document.getElementById('trophySortHeader').textContent = 'Кубки ↓'; }
+  else if(val === 'trophies_asc'){ trophySortDir = 'asc'; document.getElementById('trophySortHeader').textContent = 'Кубки ↑'; }
+  renderRoster();
+}
+function renderRoster(){
+  const q = document.getElementById('rosterSearch').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  let list = PLAYERS.filter(p=>p.name.toLowerCase().includes(q) && (activeRole==='all'||p.role===activeRole));
+  if(sort==='trophies_desc') list.sort((a,b)=>b.trophies-a.trophies);
+  if(sort==='trophies_asc') list.sort((a,b)=>a.trophies-b.trophies);
+  if(sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+  if(sort==='winrate') list.sort((a,b)=>b.winrate-a.winrate);
+  if(sort==='activity') list.sort((a,b)=>(b.online?1:0)-(a.online?1:0));
+
+  document.getElementById('rosterBody').innerHTML = list.map(p=>`
+    <tr onclick="openPlayer('${p.name}')">
+      <td><div class="name-cell"><div class="avatar" style="width:36px;height:36px;font-size:15px;">${avatarInner(p)}</div>${p.name}</div></td>
+      <td><span class="badge ${ROLES[p.role].cls}">${ROLES[p.role].label}</span></td>
+      <td>🏆 ${p.trophies.toLocaleString('ru-RU')}</td>
+      <td><span class="bic">${bestBrawlerIconInner(p)}</span> ${p.bestT}</td>
+      <td><div class="winrate-wrap"><div class="winrate-track"><div class="winrate-fill" style="width:${p.winrate}%;"></div></div>${p.winrate}%</div></td>
+      <td>${p.online?'<span class="online-dot"></span>':'<span class="offline-dot"></span>'}${p.activity}</td>
+    </tr>
+  `).join('');
+}
+
+/* ============ PLAYER MODAL ============ */
+function openPlayer(name){
+  const p = PLAYERS.find(x=>x.name===name);
+  if(!p) return;
+  document.getElementById('playerModalContent').innerHTML = `
+    <button class="modal-close" onclick="document.getElementById('playerModal').classList.remove('active')">✕</button>
+    <div class="modal-head">
+      <div class="avatar rank1" style="width:64px;height:64px;font-size:28px;">${avatarInner(p)}</div>
+      <div>
+        <div style="font-weight:800; font-size:18px;">${p.name}</div>
+        <span class="badge ${ROLES[p.role].cls}">${ROLES[p.role].label}</span>
+        <div style="color:var(--text-dim); font-size:12px; margin-top:6px;">В клане с ${p.joined}</div>
+      </div>
+    </div>
+    <div class="modal-grid">
+      <div class="mini-stat"><div class="v">🏆 ${p.trophies.toLocaleString('ru-RU')}</div><div class="l">Текущие кубки</div></div>
+      <div class="mini-stat"><div class="v">${p.winrate}%</div><div class="l">Винрейт в КЛ</div></div>
+      <div class="mini-stat"><div class="v">${p.bestT}</div><div class="l">Лучший бравлер (кубки)</div></div>
+      <div class="mini-stat"><div class="v">${p.activity}</div><div class="l">Последняя активность</div></div>
+    </div>
+    <div style="color:var(--text-dim); font-size:12px; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Топ-5 бравлеров ${p.top5Brawlers ? '' : '<span style="color:var(--text-faint); text-transform:none; letter-spacing:0;">(демо, бэкенд не подключён)</span>'}</div>
+    <div class="brawler-chip-row">
+      ${
+        p.top5Brawlers && p.top5Brawlers.length
+          ? p.top5Brawlers.map(b => `<div class="brawler-chip" title="${b.name}"><span class="bic"><span class="bic-emoji">${brawlerIconFallback(b.name)}</span><img class="bic-img" src="https://cdn.brawlify.com/brawlers/borders/${b.id}.png" alt="" onerror="this.style.display='none'"></span> ${b.trophies.toLocaleString('ru-RU')}</div>`).join('')
+          : BRAWLERS.slice(0,5).map(b=>`<div class="brawler-chip"><span class="bic">${brawlerIconInner(b)}</span> ${500+Math.floor(Math.random()*800)}</div>`).join('')
+      }
+    </div>
+  `;
+  document.getElementById('playerModal').classList.add('active');
+}
+document.getElementById('playerModal').addEventListener('click', e=>{
+  if(e.target.id==='playerModal') e.currentTarget.classList.remove('active');
+});
+
+/* ============ CHARTS ============ */
+Chart.defaults.color = '#9c9cc4';
+Chart.defaults.font.family = "'Manrope', sans-serif";
+
+const trophyDataSets = {
+  7:  {labels:['16 мая','17 мая','18 мая','19 мая','20 мая','21 мая','22 мая'], data:[80100,79400,82600,84900,83700,85950,87450]},
+  30: {labels:Array.from({length:10},(_,i)=>`${i*3+1} авг`), data:[74200,75800,76100,78400,79900,80200,82500,84100,86000,87450]},
+  90: {labels:['Июн','Июл','Авг'], data:[65000,76500,87450]},
+};
+let trophyChart;
+function renderTrophyChart(period=7){
+  const ctx = document.getElementById('trophyChart');
+  const d = trophyDataSets[period];
+  const gradient = ctx.getContext('2d').createLinearGradient(0,0,0,280);
+  gradient.addColorStop(0,'rgba(47,216,255,0.35)');
+  gradient.addColorStop(1,'rgba(47,216,255,0)');
+  if(trophyChart) trophyChart.destroy();
+  trophyChart = new Chart(ctx, {
+    type:'line',
+    data:{labels:d.labels, datasets:[{
+      data:d.data, borderColor:'#2fd8ff', backgroundColor:gradient, fill:true, tension:0.4,
+      pointBackgroundColor:'#2fd8ff', pointBorderColor:'#0d0d1e', pointRadius:4, pointHoverRadius:6, borderWidth:3
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{backgroundColor:'#171432', borderColor:'rgba(47,216,255,.4)', borderWidth:1, padding:12, titleColor:'#f5f5fb', bodyColor:'#2fd8ff', callbacks:{label:c=>c.parsed.y.toLocaleString('ru-RU')+' кубков'}}},
+      scales:{
+        x:{grid:{color:'rgba(130,120,255,0.08)'}, ticks:{color:'#6c6a92'}},
+        y:{grid:{color:'rgba(130,120,255,0.08)'}, ticks:{color:'#6c6a92', callback:v=>(v/1000)+'K'}}
+      }
+    }
+  });
+}
+function setPeriod(btn, period){
+  document.querySelectorAll('.period-switch button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrophyChart(period);
+}
+
+/* radar chart */
+let radarChart;
+function playerRadarData(p){
+  return [
+    Math.min(100, p.trophies/160),
+    p.winrate,
+    Math.min(100, p.bestT/10),
+    p.online ? 90 : 55,
+    Math.min(100, 40+Math.random()*50)
+  ];
+}
+function initCompareSelects(){
+  const opts = PLAYERS.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  document.getElementById('cmp1').innerHTML = opts;
+  document.getElementById('cmp2').innerHTML = opts;
+  document.getElementById('cmp1').value = PLAYERS[0].name;
+  document.getElementById('cmp2').value = PLAYERS[1].name;
+}
+function updateRadar(){
+  const p1 = PLAYERS.find(p=>p.name===document.getElementById('cmp1').value);
+  const p2 = PLAYERS.find(p=>p.name===document.getElementById('cmp2').value);
+  const labels = ['Кубки','Винрейт КЛ','Лучший бравлер','Активность','Средний урон'];
+  if(radarChart) radarChart.destroy();
+  radarChart = new Chart(document.getElementById('radarChart'), {
+    type:'radar',
+    data:{labels, datasets:[
+      {label:p1.name, data:playerRadarData(p1), borderColor:'#2fd8ff', backgroundColor:'rgba(47,216,255,0.15)', pointBackgroundColor:'#2fd8ff'},
+      {label:p2.name, data:playerRadarData(p2), borderColor:'#ffc93c', backgroundColor:'rgba(255,201,60,0.12)', pointBackgroundColor:'#ffc93c'}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, padding:16}}},
+      scales:{r:{angleLines:{color:'rgba(130,120,255,.15)'}, grid:{color:'rgba(130,120,255,.12)'}, pointLabels:{color:'#9c9cc4', font:{size:11}}, ticks:{display:false}, suggestedMin:0, suggestedMax:100}}
+    }
+  });
+}
+
+/* multi-line trophy progress */
+function renderMultiLine(){
+  const labels = trophyDataSets[7].labels;
+  const top3 = [...PLAYERS].sort((a,b)=>b.trophies-a.trophies).slice(0,3);
+  const colors = ['#2fd8ff','#ffc93c','#3ce87a'];
+  new Chart(document.getElementById('multiLineChart'), {
+    type:'line',
+    data:{labels, datasets:top3.map((p,i)=>({
+      label:p.name,
+      data:labels.map((_,d)=>Math.round(p.trophies - (6-d)*(30+Math.random()*40))),
+      borderColor:colors[i], backgroundColor:'transparent', tension:0.4, borderWidth:2.5, pointRadius:3
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, padding:16}}},
+      scales:{x:{grid:{color:'rgba(130,120,255,0.08)'}}, y:{grid:{color:'rgba(130,120,255,0.08)'}}}
+    }
+  });
+}
+
+/* win/loss bar */
+function renderWL(){
+  new Chart(document.getElementById('wlChart'), {
+    type:'bar',
+    data:{labels:['Сезон 1','Сезон 2','Сезон 3','Сезон 4','Сезон 5'],
+      datasets:[
+        {label:'Победы', data:[8,10,9,11,12], backgroundColor:'#3ce87a', borderRadius:6},
+        {label:'Поражения', data:[4,2,3,1,3], backgroundColor:'#ff4d6d', borderRadius:6},
+      ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10,padding:16}}},
+      scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:{color:'rgba(130,120,255,0.08)'}}}
+    }
+  });
+}
+
+function renderMaps(){
+  document.getElementById('mapsList').innerHTML = MAPS.map(m=>`
+    <div class="map-row">
+      <div class="map-name">${m.name}</div>
+      <div class="map-bar-track"><div class="map-bar-fill" style="width:${m.pct}%;"></div></div>
+      <div class="map-pct">${m.pct}%</div>
+    </div>
+  `).join('');
+}
+
+function renderTopFighters(){
+  const top10 = [...PLAYERS].sort((a,b)=>b.trophies-a.trophies).slice(0,10);
+  document.getElementById('topFightersList').innerHTML = top10.map((p,i)=>`
+    <div class="player-row" onclick="openPlayer('${p.name}')">
+      <div class="p-rank">${i+1}</div>
+      <div class="avatar" style="width:36px;height:36px;font-size:16px;">${avatarInner(p)}</div>
+      <div class="p-meta"><div class="p-name">${p.name}</div></div>
+      <div class="p-trophy">🏆 ${p.trophies.toLocaleString('ru-RU')}</div>
+    </div>
+  `).join('');
+}
+
+function renderSchedule(){
+  document.getElementById('scheduleList').innerHTML = SCHEDULE.map(s=>`
+    <div class="match-row">
+      <div class="match-icon" style="background:rgba(47,216,255,.12); color:var(--cyan);">🛡</div>
+      <div class="match-type"><div class="t1">${s.day} · vs ${s.opponent}</div><div class="t2">${s.time}</div></div>
+      <span class="status-pill ${s.status}">${s.status==='live'?'ИДЁТ БОЙ':s.status==='upcoming'?'ОЖИДАЕТСЯ':'ЗАВЕРШЁН'}</span>
+    </div>
+  `).join('');
+}
+function renderLineup(){
+  const lineup = PLAYERS.slice(0,10);
+  document.getElementById('lineupGrid').innerHTML = lineup.map((p,i)=>`
+    <div class="lineup-card">
+      <div class="avatar" style="width:38px;height:38px;font-size:16px;">${avatarInner(p)}</div>
+      <div><div style="font-weight:700; font-size:13px;">${p.name}</div><div style="color:var(--text-dim); font-size:11px;">${p.best} выбран</div></div>
+      <div class="lineup-status">${i<8?'✅':'⏳'}</div>
+    </div>
+  `).join('');
+}
+function renderHistory(){
+  document.getElementById('historyList').innerHTML = HISTORY.map(h=>`
+    <div class="match-row">
+      <div class="match-icon" style="background:${h.result==='win'?'rgba(60,232,122,.12)':'rgba(255,77,109,.12)'}; color:${h.result==='win'?'var(--green)':'var(--red)'};">${h.result==='win'?'🏆':'💀'}</div>
+      <div class="match-type"><div class="t1">${h.map}</div><div class="t2">против ${h.opponent}</div></div>
+      <span class="badge ${h.result}">${h.result==='win'?'ПОБЕДА':'ПОРАЖЕНИЕ'}</span>
+      <div class="match-score">${h.score}</div>
+      <div class="match-time">${h.date}</div>
+    </div>
+  `).join('');
+}
+
+/* ============ EVENTS RENDER ============ */
+function renderEvents(){
+  document.getElementById('eventsGrid').innerHTML = EVENTS.map(e=>`
+    <div class="event-card">
+      <div class="event-banner ${e.banner}">${e.icon}</div>
+      <div class="event-body">
+        <h3>${e.title}</h3>
+        <div class="meta"><span>📅 ${e.date}</span><span>🎮 ${e.mode}</span></div>
+        <div class="event-countdown">⏳ ${e.countdown}</div>
+        <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="showToast('Вы записаны на «${e.title}»')">Записаться</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderGallery(){
+  const icons = ['🏆','⭐','🎮','🛡','💎','🔥','👑','🚀','🎯','⚔️','🌌','🥇'];
+  document.getElementById('galleryGrid').innerHTML = icons.map((ic,i)=>`
+    <div class="gallery-item" style="background:linear-gradient(135deg, hsl(${i*30},60%,18%), hsl(${i*30+40},55%,12%));" onclick="showToast('Открыть фото в полном размере')">${ic}</div>
+  `).join('');
+}
+
+/* ==========================================================================
+   ИНТЕГРАЦИЯ РЕАЛЬНЫХ ДАННЫХ С БЭКЕНДА
+   ==========================================================================
+   ⚠️ ЕДИНСТВЕННОЕ, ЧТО НУЖНО ПОМЕНЯТЬ РУКАМИ — строка BACKEND_URL ниже.
+   Впиши туда настоящий адрес своего задеплоенного бэкенда (Render/Railway),
+   БЕЗ слэша на конце. Пока бэкенд не задеплоен или адрес не заменён —
+   сайт тихо остаётся на демо-данных, это нормально и ничего не ломает.
+   ========================================================================== */
+const BACKEND_URL = "https://brawlclan-backend.onrender.com";
+
+function brawlerIconFallback(name) {
+  if (!name) return "⭐";
+  let hash = 0;
+  for (const ch of name) hash = (hash + ch.charCodeAt(0)) % BRAWLERS.length;
+  return BRAWLERS[hash];
+}
+
+// Превращает ISO-дату последнего боя в человеко-читаемую строку ("В сети", "3 ч назад" и т.д.)
+function formatLastSeen(iso) {
+  if (!iso) return "Нет данных";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 5) return "В сети";
+  if (min < 60) return `${min} мин назад`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} ч назад`;
+  const days = Math.floor(hours / 24);
+  return `${days} дн назад`;
+}
+
+async function loadRealData() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/roster`);
+    if (!res.ok) throw new Error("Бэкенд ответил ошибкой: " + res.status);
+    const roster = await res.json();
+    if (!Array.isArray(roster) || roster.length === 0) return;
+
+    // сначала подтягиваем активность — у неё есть время последнего боя (lastBattleAt)
+    // каждого игрока, привязанное к его тегу
+    const activityMap = new Map();
+    try {
+      const activityRes = await fetch(`${BACKEND_URL}/api/activity`);
+      if (activityRes.ok) {
+        const activity = await activityRes.json();
+        (activity.perPlayer || []).forEach((p) => activityMap.set(p.tag, p.lastBattleAt));
+        const bigEl = document.getElementById("activityBig");
+        const subEl = document.getElementById("activitySub");
+        if (bigEl) bigEl.textContent = activity.activeToday;
+        if (subEl) {
+          subEl.innerHTML = `игроков заходили за 24ч · <span style="color:var(--green)">${activity.onlineNowIsh} играли в последний час</span>`;
+        }
+      }
+    } catch (e) {
+      console.warn("Не удалось загрузить активность:", e);
+    }
+
+    PLAYERS.length = 0;
+    roster.forEach((p) => {
+      const emoji = brawlerIconFallback(p.bestBrawlerName);
+      const lastBattleAt = activityMap.get(p.tag) || null;
+      const isOnline = lastBattleAt ? (Date.now() - new Date(lastBattleAt).getTime() <= 60 * 60 * 1000) : false;
+      PLAYERS.push({
+        name: p.name,
+        role: p.role,
+        trophies: p.trophies,
+        best: emoji,
+        bestT: p.bestBrawlerTrophies,
+        winrate: 50,
+        activity: formatLastSeen(lastBattleAt),
+        online: isOnline,
+        joined: "—",
+        iconId: p.iconId || null,
+        bestBrawlerId: p.bestBrawlerId || null, // настоящий ID лучшего бравлера — для точной картинки
+        top5Brawlers: Array.isArray(p.top5Brawlers) ? p.top5Brawlers : null, // настоящие топ-5 бравлеров, если бэкенд их отдал
+      });
+    });
+
+    const clubRes = await fetch(`${BACKEND_URL}/api/club`);
+    if (clubRes.ok) {
+      const club = await clubRes.json();
+      const chip1 = document.querySelector(".hero-chips .chip:nth-child(1) .val");
+      const chip2 = document.querySelector(".hero-chips .chip:nth-child(2) .val");
+      if (chip1) chip1.textContent = club.trophies.toLocaleString("ru-RU");
+      if (chip2) chip2.textContent = `${club.members.length}/30`;
+    }
+
+    renderTop5();
+    renderPodium();
+    renderRoster();
+    renderTopFighters();
+    initCompareSelects();
+    updateRadar();
+
+    showToast("Статистика обновлена из Brawl Stars API ✅");
+  } catch (err) {
+    console.warn("Не удалось загрузить реальные данные, остаёмся на демо:", err);
+  }
+}
+
+/* ============ INIT ============ */
+renderTop5();
+renderPodium();
+renderMatches();
+renderRoster();
+renderTrophyChart(7);
+renderTopFighters();
+initCompareSelects();
+updateRadar();
+renderMultiLine();
+renderWL();
+renderMaps();
+renderSchedule();
+renderLineup();
+renderHistory();
+renderEvents();
+renderGallery();
+
+// Пытаемся подтянуть реальные данные с бэкенда (см. BACKEND_URL выше)
+loadRealData();
+setInterval(loadRealData, 10 * 60 * 1000); // обновление раз в 10 минут
+</script>
+</body>
+</html>
