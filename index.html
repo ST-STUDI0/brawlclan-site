@@ -1189,6 +1189,16 @@ function openPlayer(name){
       <div class="mini-stat"><div class="v">${p.bestT}</div><div class="l">Лучший бравлер (кубки)</div></div>
       <div class="mini-stat"><div class="v">${p.activity}</div><div class="l">Последняя активность</div></div>
     </div>
+    <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="openPlayerFullStats('${p.tag || ''}', ${JSON.stringify(p.name)})">📊 Полная статистика</button>
+  `;
+  document.getElementById('playerModal').classList.add('active');
+}
+
+function openPlayerFullStats(tag, name){
+  document.getElementById('playerModalContent').innerHTML = `
+    <button class="modal-close" onclick="document.getElementById('playerModal').classList.remove('active')">✕</button>
+    <button class="link-more" style="margin-bottom:14px; background:none; border:none; padding:0; font-family:var(--font-body);" onclick="openPlayer(${JSON.stringify(name)})">← Назад к профилю</button>
+    <div style="font-weight:800; font-size:17px; margin-bottom:14px;">${name}</div>
     <div class="player-detail-tabs">
       <button class="active" id="playerTabBattlesBtn" onclick="switchPlayerDetailTab('battles')">Последние бои</button>
       <button id="playerTabBrawlersBtn" onclick="switchPlayerDetailTab('brawlers')">Бравлеры</button>
@@ -1196,8 +1206,7 @@ function openPlayer(name){
     <div id="playerBattlesTab">Загрузка...</div>
     <div id="playerBrawlersTab" style="display:none;"></div>
   `;
-  document.getElementById('playerModal').classList.add('active');
-  loadPlayerDetails(p.tag);
+  loadPlayerDetails(tag);
 }
 
 function switchPlayerDetailTab(tab){
@@ -1249,15 +1258,25 @@ function renderPlayerBattlesTab(battles){
 
   el.innerHTML = battles.slice(0, 15).map(b => {
     const modeName = MODE_NAME_RU[b.mode] || b.mode || 'Режим неизвестен';
+    // Free-for-all (Соло/Дуо Файтер и т.п.) — нет команд, есть только ранг. Не делим на "мою команду"/"соперников".
+    const isFreeForAll = !b.result && (b.rank !== null && b.rank !== undefined);
     const resultBadge = b.result
       ? `<span class="battle-result-badge ${b.result}">${b.result === 'victory' ? 'Победа' : b.result === 'defeat' ? 'Поражение' : 'Ничья'}</span>`
-      : (b.rank ? `<span class="battle-result-badge draw">Ранг ${b.rank}</span>` : '');
-    const teamRow = (players, isMine) => players.map(pl => `
-      <div class="battle-player-row">
+      : (isFreeForAll ? `<span class="battle-result-badge ${b.rank <= 2 ? 'victory' : b.rank >= 7 ? 'defeat' : 'draw'}">Ранг ${b.rank}</span>` : '');
+
+    const playerRow = (pl, highlight) => `
+      <div class="battle-player-row" style="${highlight ? 'background:rgba(47,216,255,.08); border-radius:6px; padding:4px 6px; margin:2px -6px;' : ''}">
         ${brawlerImgTag(pl.brawlerId)}
-        <span>${pl.name}</span>
+        <span style="${highlight ? 'color:var(--cyan); font-weight:700;' : ''}">${pl.name}${highlight ? ' (вы)' : ''}</span>
         ${pl.brawlerTrophies !== null ? `<span style="color:var(--gold-1); margin-left:auto;">🏆${pl.brawlerTrophies}</span>` : ''}
-      </div>`).join('');
+      </div>`;
+
+    const teamsHtml = isFreeForAll
+      ? `<div><div class="battle-team-title">Участники матча</div>${[...b.myTeam.map(p=>({...p,mine:true})), ...b.enemyTeam.map(p=>({...p,mine:false}))].map(pl => playerRow(pl, pl.mine)).join('')}</div>`
+      : `<div class="battle-teams">
+          <div><div class="battle-team-title mine">Моя команда</div>${b.myTeam.map(pl=>playerRow(pl,false)).join('') || '<div style="color:var(--text-faint); font-size:11px;">—</div>'}</div>
+          <div><div class="battle-team-title">Соперники</div>${b.enemyTeam.map(pl=>playerRow(pl,false)).join('') || '<div style="color:var(--text-faint); font-size:11px;">—</div>'}</div>
+        </div>`;
 
     return `
       <div class="battle-card">
@@ -1269,10 +1288,7 @@ function renderPlayerBattlesTab(battles){
           </div>
           ${resultBadge}
         </div>
-        <div class="battle-teams">
-          <div><div class="battle-team-title mine">Моя команда</div>${teamRow(b.myTeam, true) || '<div style="color:var(--text-faint); font-size:11px;">—</div>'}</div>
-          <div><div class="battle-team-title">Соперники</div>${teamRow(b.enemyTeam, false) || '<div style="color:var(--text-faint); font-size:11px;">—</div>'}</div>
-        </div>
+        ${teamsHtml}
         <div class="battle-meta-line">
           ${b.duration !== null ? `<span>⏱ ${formatBattleDuration(b.duration)}</span>` : ''}
           ${b.trophyChange !== null ? `<span style="color:${b.trophyChange >= 0 ? 'var(--green)' : 'var(--red)'};">🏆 ${b.trophyChange >= 0 ? '+' : ''}${b.trophyChange}</span>` : ''}
