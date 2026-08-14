@@ -1414,7 +1414,7 @@ function renderRealEvents(events){
           <h3>${e.title}${formatBadge}</h3>
           <div class="meta"><span>📅 ${dateStr}</span>${e.mode ? `<span>🎮 ${e.mode}</span>` : ''}${e.map ? `<span>🗺 ${e.map}</span>` : ''}</div>
           ${e.description ? `<div style="color:var(--text-dim); font-size:12.5px; margin-bottom:14px;">${e.description}</div>` : ''}
-          <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="applyToEvent('${e.id}', ${JSON.stringify(e.title)})">${btnLabel}</button>
+          <button class="btn-secondary apply-event-btn" data-event-id="${e.id}" style="width:100%; justify-content:center;">${btnLabel}</button>
         </div>
       </div>`;
   }).join('');
@@ -1437,6 +1437,16 @@ async function applyToEvent(eventId, title){
     showToast('Не удалось отправить заявку, попробуй позже');
   }
 }
+
+// Делегирование клика — надёжнее, чем инлайн onclick с динамическим текстом
+// (никакие спецсимволы в названии события больше не могут сломать кнопку)
+document.getElementById('eventsGrid').addEventListener('click', (e) => {
+  const btn = e.target.closest('.apply-event-btn');
+  if(!btn) return;
+  const eventId = btn.dataset.eventId;
+  const eventObj = REAL_EVENTS_CACHE.find(ev => ev.id === eventId);
+  applyToEvent(eventId, eventObj ? eventObj.title : 'событие');
+});
 
 /* ==========================================================================
    АДМИН-ПАНЕЛЬ (видна только тебе, после входа с твоим Discord ID в ADMIN_DISCORD_IDS)
