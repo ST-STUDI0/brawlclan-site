@@ -379,7 +379,8 @@ select option{background:#171432; color:#f5f5fb;}
   transition:transform .2s, box-shadow .2s;
 }
 .event-card:hover{transform:translateY(-4px); box-shadow:0 14px 34px rgba(47,216,255,0.12);}
-.event-banner{height:110px; display:flex; align-items:center; justify-content:center; font-size:44px; position:relative;}
+.event-banner{height:110px; display:flex; align-items:center; justify-content:center; font-size:44px; position:relative; overflow:hidden;}
+.event-banner img{width:100%; height:100%; object-fit:cover;}
 .event-banner.b1{background:linear-gradient(135deg,#2a1f5c,#3d2a7a);}
 .event-banner.b2{background:linear-gradient(135deg,#1f3f5c,#2a5a7a);}
 .event-banner.b3{background:linear-gradient(135deg,#5c2a3f,#7a2a4f);}
@@ -387,6 +388,41 @@ select option{background:#171432; color:#f5f5fb;}
 .event-body h3{font-family:var(--font-display); font-size:14.5px; margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;}
 .event-body .meta{color:var(--text-dim); font-size:12.5px; margin-bottom:14px; display:flex; gap:14px; flex-wrap:wrap;}
 .event-countdown{font-size:12px; color:var(--gold-1); font-weight:800; margin-bottom:14px;}
+
+/* ---------- COUNTDOWN (расписание + модалка матча) ---------- */
+.countdown-inline{font-family:var(--font-display); font-weight:800; color:var(--gold-1); font-size:13px;}
+.countdown-block{display:flex; gap:8px; margin:14px 0;}
+.countdown-block .cbox{background:rgba(255,255,255,.05); border:1px solid var(--stroke); border-radius:10px; padding:10px 14px; text-align:center; flex:1;}
+.countdown-block .cbox .n{font-family:var(--font-display); font-weight:800; font-size:20px;}
+.countdown-block .cbox .l{font-size:9.5px; color:var(--text-dim); text-transform:uppercase; margin-top:2px;}
+
+/* ---------- MATCH MODAL: картинка, две команды, видео ---------- */
+.match-modal-banner{width:100%; height:150px; border-radius:14px; object-fit:cover; margin-bottom:16px; background:linear-gradient(135deg,#2a1f5c,#3d2a7a);}
+.two-teams-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+.team-block{background:rgba(255,255,255,.03); border:1px solid var(--stroke); border-radius:14px; padding:14px;}
+.team-block .team-name{font-family:var(--font-display); font-weight:800; font-size:12px; letter-spacing:1px; color:var(--cyan); text-transform:uppercase; margin-bottom:10px;}
+.team-block .team-player{font-size:13px; padding:6px 0; border-bottom:1px solid rgba(130,120,255,0.08);}
+.team-block .team-player:last-child{border-bottom:none;}
+.result-score{text-align:center; padding:18px; background:rgba(255,215,106,0.08); border:1px solid rgba(255,215,106,.3); border-radius:14px; margin-bottom:16px;}
+.result-score .score{font-family:var(--font-display); font-weight:900; font-size:32px; color:var(--gold-1);}
+.result-score .label{color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-top:4px;}
+.video-player-wrap{margin-bottom:16px; border-radius:14px; overflow:hidden; background:#000;}
+.video-player-wrap video, .video-player-wrap iframe{width:100%; display:block; aspect-ratio:16/9; border:none;}
+
+/* ---------- ADMIN: форма создания события ---------- */
+.admin-create-form{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+.admin-create-form input, .admin-create-form select, .admin-create-form textarea{
+  background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:10px; padding:10px 12px;
+  color:var(--text); font-family:var(--font-body); font-size:13px;
+}
+.admin-create-form .full{grid-column:1 / -1;}
+.map-search-results{max-height:180px; overflow-y:auto; border:1px solid var(--stroke); border-radius:10px; margin-top:6px; display:none;}
+.map-search-results.show{display:block;}
+.map-search-item{display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:12.5px;}
+.map-search-item:hover{background:rgba(255,255,255,.05);}
+.map-search-item img{width:32px; height:32px; border-radius:6px; object-fit:cover;}
+.file-input-label{display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--cyan); font-size:12.5px; font-weight:700;}
+.file-input-label input{display:none;}
 
 .recruit-box{display:grid; grid-template-columns:1fr 1fr; gap:26px;}
 .req-list{list-style:none;}
@@ -708,7 +744,36 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 <!-- ============ ADMIN ============ -->
 <section id="page-admin" class="page">
   <div class="panel">
-    <div class="panel-header"><h2>🛠 Заявки на клановые события</h2></div>
+    <div class="panel-header">
+      <h2>🛠 Клановые события</h2>
+      <a onclick="toggleCreateEventForm()" id="createEventToggle">+ Создать событие</a>
+    </div>
+    <form class="admin-create-form" id="createEventForm" style="display:none;" onsubmit="event.preventDefault(); submitNewEvent();">
+      <input type="text" id="newEvTitle" placeholder="Название события" required>
+      <select id="newEvFormat">
+        <option value="3x3">⚔️ 3×3</option>
+        <option value="5x5">⚔️ 5×5</option>
+        <option value="tournament">🏆 Турнир</option>
+      </select>
+      <input type="datetime-local" id="newEvDate" required>
+      <input type="text" id="newEvMode" placeholder="Режим (например Нокаут)">
+      <div class="full" style="position:relative;">
+        <input type="text" id="newEvMapSearch" placeholder="Начни вписывать название карты..." autocomplete="off" oninput="searchMaps(this.value)">
+        <input type="hidden" id="newEvMap">
+        <div class="map-search-results" id="mapSearchResults"></div>
+      </div>
+      <div class="full">
+        <label class="file-input-label">🖼 Прикрепить картинку события<input type="file" id="newEvImageFile" accept="image/*"></label>
+        <span id="newEvImageName" style="color:var(--text-dim); font-size:11.5px; margin-left:8px;"></span>
+      </div>
+      <div class="full">
+        <label class="file-input-label">🎬 Загрузить видео (необязательно)<input type="file" id="newEvVideoFile" accept="video/*"></label>
+        <span id="newEvVideoName" style="color:var(--text-dim); font-size:11.5px; margin-left:8px;"></span>
+      </div>
+      <input type="text" class="full" id="newEvVideoLink" placeholder="...или вставь ссылку на видео (YouTube и т.д.), если не загружаешь файл">
+      <textarea class="full" id="newEvDescription" placeholder="Краткое описание (необязательно)"></textarea>
+      <button type="submit" class="btn-primary full" style="justify-content:center;" id="submitNewEventBtn">Создать событие</button>
+    </form>
     <div id="adminApplicationsList" style="color:var(--text-dim); font-size:14px;">Загрузка...</div>
   </div>
 </section>
@@ -736,6 +801,11 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 <div class="modal-overlay" id="matchModal">
   <div class="modal-box" id="matchModalContent" style="max-width:560px;"></div>
 </div>
+
+<datalist id="teamOptions">
+  <option value="Команда 1">
+  <option value="Команда 2">
+</datalist>
 
 <div class="toast" id="toast"></div>
 
@@ -1029,16 +1099,25 @@ document.getElementById('playerModal').addEventListener('click', e=>{
 });
 
 /* ============ РАСПИСАНИЕ КЛУБНОЙ ЛИГИ ИЗ РЕАЛЬНЫХ СОБЫТИЙ ============ */
+function formatCountdownParts(targetMs){
+  const diff = targetMs - Date.now();
+  if(diff <= 0) return null;
+  return {
+    h: Math.floor(diff / 3600000),
+    m: Math.floor((diff % 3600000) / 60000),
+    s: Math.floor((diff % 60000) / 1000),
+  };
+}
+
+let scheduleCountdownTimer = null;
 function renderScheduleFromEvents(events){
   const list = document.getElementById('scheduleList');
   if(!list) return;
   if(!events.length){ list.innerHTML = '<p style="color:var(--text-dim);">Пока нет запланированных событий.</p>'; return; }
 
-  const now = Date.now();
   list.innerHTML = events.map(e => {
     const eventTime = e.event_date ? new Date(e.event_date).getTime() : null;
-    const isPast = e.result || (eventTime && eventTime < now);
-    const status = e.result ? 'done' : (eventTime && eventTime < now ? 'live' : 'upcoming');
+    const status = e.result ? 'done' : (eventTime && eventTime < Date.now() ? 'live' : 'upcoming');
     const statusLabel = status === 'done' ? 'ЗАВЕРШЕНО' : status === 'live' ? 'ИДЁТ / СКОРО' : 'ЗАПЛАНИРОВАНО';
     const dateStr = e.event_date
       ? new Date(e.event_date).toLocaleString('ru-RU', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})
@@ -1047,61 +1126,111 @@ function renderScheduleFromEvents(events){
       <div class="match-row" style="cursor:pointer;" onclick="openMatchModal('${e.id}')">
         <div class="match-icon" style="background:rgba(47,216,255,.12); color:var(--cyan);">${e.format === '3x3' ? '⚔️' : e.format === '5x5' ? '🛡' : '🏆'}</div>
         <div class="match-type"><div class="t1">${e.title}</div><div class="t2">${dateStr}${e.mode ? ' · ' + e.mode : ''}</div></div>
+        <span class="countdown-inline" data-countdown="${eventTime || ''}" id="sched-cd-${e.id}"></span>
         <span class="status-pill ${status}">${statusLabel}</span>
       </div>`;
   }).join('');
+
+  updateScheduleCountdowns();
+  if(scheduleCountdownTimer) clearInterval(scheduleCountdownTimer);
+  scheduleCountdownTimer = setInterval(updateScheduleCountdowns, 1000);
 }
 
+function updateScheduleCountdowns(){
+  document.querySelectorAll('[data-countdown]').forEach(el => {
+    const target = Number(el.dataset.countdown);
+    if(!target){ el.textContent = ''; return; }
+    const parts = formatCountdownParts(target);
+    el.textContent = parts ? `⏳ ${parts.h}ч ${parts.m}м ${parts.s}с` : '';
+  });
+}
+
+let matchModalCountdownTimer = null;
 async function openMatchModal(eventId){
   const event = REAL_EVENTS_CACHE.find(e => e.id === eventId);
   if(!event) return;
+  if(matchModalCountdownTimer) clearInterval(matchModalCountdownTimer);
+
+  const eventTime = event.event_date ? new Date(event.event_date).getTime() : null;
+
+  let videoHtml = '';
+  if(event.video_url){
+    const isDirectFile = /\.(mp4|webm|ogg)(\?|$)/i.test(event.video_url);
+    const ytMatch = event.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+    if(isDirectFile){
+      videoHtml = `<div class="video-player-wrap"><video src="${event.video_url}" controls></video></div>`;
+    } else if(ytMatch){
+      videoHtml = `<div class="video-player-wrap"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
+    } else {
+      videoHtml = `<a href="${event.video_url}" target="_blank" rel="noopener" class="btn-secondary" style="width:100%; justify-content:center; text-decoration:none; margin-bottom:16px;">🎬 Смотреть видео</a>`;
+    }
+  }
 
   const content = document.getElementById('matchModalContent');
   content.innerHTML = `
     <button class="modal-close" onclick="document.getElementById('matchModal').classList.remove('active')">✕</button>
+    ${event.image_url ? `<img src="${event.image_url}" class="match-modal-banner" alt="">` : ''}
     <div style="font-weight:800; font-size:19px; margin-bottom:6px;">${event.title}</div>
-    <div style="color:var(--text-dim); font-size:13px; margin-bottom:18px;">
+    <div style="color:var(--text-dim); font-size:13px; margin-bottom:10px;">
       ${event.event_date ? new Date(event.event_date).toLocaleString('ru-RU', {day:'2-digit', month:'long', hour:'2-digit', minute:'2-digit'}) : 'Дата уточняется'}
     </div>
+    <div class="countdown-block" id="matchModalCountdown"></div>
     <div class="modal-grid">
       <div class="mini-stat"><div class="v">${event.mode || '—'}</div><div class="l">Режим</div></div>
       <div class="mini-stat"><div class="v">${event.map || '—'}</div><div class="l">Карта</div></div>
     </div>
-    ${event.stream_url ? `<a href="${event.stream_url}" target="_blank" rel="noopener" class="btn-secondary" style="width:100%; justify-content:center; text-decoration:none; margin-bottom:14px;">📺 Смотреть стрим</a>` : ''}
-    ${event.result ? `<div class="mini-stat" style="margin-bottom:14px;"><div class="v" style="color:var(--gold-1);">${event.result}</div><div class="l">Результат</div></div>` : ''}
+    ${event.stream_url ? `<a href="${event.stream_url}" target="_blank" rel="noopener" class="btn-secondary" style="width:100%; justify-content:center; text-decoration:none; margin-bottom:16px;">📺 Смотреть стрим</a>` : ''}
+    ${videoHtml}
+    ${event.result ? `<div class="result-score"><div class="score">${event.result}</div><div class="label">Результат</div></div>` : ''}
     <div style="color:var(--text-dim); font-size:12px; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Состав команд</div>
     <div id="matchLineup" style="color:var(--text-dim); font-size:13px;">Загрузка...</div>
   `;
   document.getElementById('matchModal').classList.add('active');
 
+  const updateModalCountdown = () => {
+    const el = document.getElementById('matchModalCountdown');
+    if(!el) { clearInterval(matchModalCountdownTimer); return; }
+    if(!eventTime){ el.innerHTML = ''; return; }
+    const parts = formatCountdownParts(eventTime);
+    el.innerHTML = parts
+      ? `<div class="cbox"><div class="n">${parts.h}</div><div class="l">часов</div></div><div class="cbox"><div class="n">${parts.m}</div><div class="l">минут</div></div><div class="cbox"><div class="n">${parts.s}</div><div class="l">секунд</div></div>`
+      : `<div style="color:var(--green); font-weight:700; font-size:13px;">Событие уже началось</div>`;
+  };
+  updateModalCountdown();
+  matchModalCountdownTimer = setInterval(updateModalCountdown, 1000);
+
   try{
     const res = await fetch(`${BACKEND_URL}/api/events/${eventId}/lineup`);
     const apps = res.ok ? await res.json() : [];
     const lineupEl = document.getElementById('matchLineup');
-    const withTeam = apps.filter(a => a.assigned_team);
-    if(!withTeam.length){
-      lineupEl.innerHTML = '<p>Команды пока не распределены.</p>';
-      return;
-    }
-    const teams = {};
-    withTeam.forEach(a => {
-      if(!teams[a.assigned_team]) teams[a.assigned_team] = [];
-      teams[a.assigned_team].push(a);
-    });
-    lineupEl.innerHTML = Object.entries(teams).map(([teamName, players]) => `
-      <div style="margin-bottom:12px;">
-        <div style="font-weight:700; color:var(--cyan); font-size:13px; margin-bottom:6px;">${teamName}</div>
-        <div class="brawler-chip-row">
-          ${players.map(p => `<div class="brawler-chip">${p.discord_username}${p.assigned_time ? ` · ${p.assigned_time}` : ''}</div>`).join('')}
-        </div>
+    const team1 = apps.filter(a => a.assigned_team === 'Команда 1');
+    const team2 = apps.filter(a => a.assigned_team === 'Команда 2');
+    const others = apps.filter(a => a.assigned_team && a.assigned_team !== 'Команда 1' && a.assigned_team !== 'Команда 2');
+
+    const teamBlock = (name, players) => `
+      <div class="team-block">
+        <div class="team-name">${name}</div>
+        ${players.length
+          ? players.map(p => `<div class="team-player">${p.discord_username}${p.assigned_time ? ` <span style="color:var(--text-dim); font-size:11px;">· ${p.assigned_time}</span>` : ''}</div>`).join('')
+          : `<div class="team-player" style="color:var(--text-faint);">Пока никто не назначен</div>`}
+      </div>`;
+
+    lineupEl.innerHTML = `
+      <div class="two-teams-grid">
+        ${teamBlock('Команда 1', team1)}
+        ${teamBlock('Команда 2', team2)}
       </div>
-    `).join('');
+      ${others.length ? `<div style="margin-top:10px;"><div style="color:var(--text-dim); font-size:11.5px; margin-bottom:6px;">Другое:</div>${others.map(p=>`<div class="team-player">${p.assigned_team}: ${p.discord_username}</div>`).join('')}</div>` : ''}
+    `;
   }catch(e){
     document.getElementById('matchLineup').innerHTML = '<p>Не удалось загрузить состав.</p>';
   }
 }
 document.getElementById('matchModal').addEventListener('click', e=>{
-  if(e.target.id==='matchModal') e.currentTarget.classList.remove('active');
+  if(e.target.id==='matchModal'){
+    e.currentTarget.classList.remove('active');
+    if(matchModalCountdownTimer) clearInterval(matchModalCountdownTimer);
+  }
 });
 
 /* ============ CHARTS ============ */
@@ -1407,11 +1536,14 @@ function renderRealEvents(events){
     const btnLabel = currentUser ? 'Подать заявку' : 'Войдите, чтобы подать заявку';
     const formatBadge = e.format && formatLabels[e.format]
       ? `<span class="status-pill upcoming" style="margin-left:8px;">${formatLabels[e.format]}</span>` : '';
+    const bannerInner = e.image_url
+      ? `<img src="${e.image_url}" alt="">`
+      : icons[i % icons.length];
     return `
       <div class="event-card">
-        <div class="event-banner ${banners[i % banners.length]}">${icons[i % icons.length]}</div>
+        <div class="event-banner ${banners[i % banners.length]}" onclick="openMatchModal('${e.id}')" style="cursor:pointer;">${bannerInner}</div>
         <div class="event-body">
-          <h3>${e.title}${formatBadge}</h3>
+          <h3 style="cursor:pointer;" onclick="openMatchModal('${e.id}')">${e.title}${formatBadge}</h3>
           <div class="meta"><span>📅 ${dateStr}</span>${e.mode ? `<span>🎮 ${e.mode}</span>` : ''}${e.map ? `<span>🗺 ${e.map}</span>` : ''}</div>
           ${e.description ? `<div style="color:var(--text-dim); font-size:12.5px; margin-bottom:14px;">${e.description}</div>` : ''}
           <button class="btn-secondary apply-event-btn" data-event-id="${e.id}" style="width:100%; justify-content:center;">${btnLabel}</button>
@@ -1451,6 +1583,115 @@ document.getElementById('eventsGrid').addEventListener('click', (e) => {
 /* ==========================================================================
    АДМИН-ПАНЕЛЬ (видна только тебе, после входа с твоим Discord ID в ADMIN_DISCORD_IDS)
    ========================================================================== */
+/* ============ СОЗДАНИЕ СОБЫТИЯ (АДМИН) ============ */
+let MAPS_CACHE = [];
+
+function toggleCreateEventForm(){
+  const form = document.getElementById('createEventForm');
+  form.style.display = form.style.display === 'none' ? 'grid' : 'none';
+}
+
+async function searchMaps(query){
+  const resultsEl = document.getElementById('mapSearchResults');
+  if(!query || query.length < 2){ resultsEl.classList.remove('show'); return; }
+
+  if(MAPS_CACHE.length === 0){
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/maps`);
+      if(res.ok) MAPS_CACHE = await res.json();
+    }catch(e){ console.warn('Не удалось загрузить карты', e); }
+  }
+
+  const q = query.toLowerCase();
+  const matches = MAPS_CACHE.filter(m => m.name?.toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){ resultsEl.classList.remove('show'); return; }
+
+  resultsEl.innerHTML = matches.map(m => `
+    <div class="map-search-item" onclick="pickMap(${JSON.stringify(m.name).replace(/"/g,'&quot;')})">
+      ${m.imageUrl ? `<img src="${m.imageUrl}" alt="">` : ''}
+      <span>${m.name}${m.mode ? ` <span style="color:var(--text-dim);">· ${m.mode}</span>` : ''}</span>
+    </div>
+  `).join('');
+  resultsEl.classList.add('show');
+}
+
+function pickMap(name){
+  document.getElementById('newEvMapSearch').value = name;
+  document.getElementById('newEvMap').value = name;
+  document.getElementById('mapSearchResults').classList.remove('show');
+}
+
+async function uploadFile(fileInputEl){
+  const file = fileInputEl.files[0];
+  if(!file) return null;
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${BACKEND_URL}/api/admin/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getAuthToken()}` },
+    body: formData,
+  });
+  if(!res.ok) throw new Error('Не удалось загрузить файл');
+  const data = await res.json();
+  return data.url;
+}
+
+document.getElementById('newEvImageFile')?.addEventListener('change', function(){
+  document.getElementById('newEvImageName').textContent = this.files[0]?.name || '';
+});
+document.getElementById('newEvVideoFile')?.addEventListener('change', function(){
+  document.getElementById('newEvVideoName').textContent = this.files[0]?.name || '';
+});
+
+async function submitNewEvent(){
+  const btn = document.getElementById('submitNewEventBtn');
+  const title = document.getElementById('newEvTitle').value.trim();
+  const format = document.getElementById('newEvFormat').value;
+  const dateVal = document.getElementById('newEvDate').value;
+  const mode = document.getElementById('newEvMode').value.trim();
+  const map = document.getElementById('newEvMap').value.trim();
+  const description = document.getElementById('newEvDescription').value.trim();
+  const videoLink = document.getElementById('newEvVideoLink').value.trim();
+
+  if(!title || !dateVal){ showToast('Заполни название и дату события'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Создаём...';
+  try{
+    let image_url = null;
+    let video_url = videoLink || null;
+
+    const imageFile = document.getElementById('newEvImageFile');
+    if(imageFile.files[0]) image_url = await uploadFile(imageFile);
+
+    const videoFile = document.getElementById('newEvVideoFile');
+    if(videoFile.files[0]) video_url = await uploadFile(videoFile); // загруженный файл важнее вставленной ссылки
+
+    const res = await fetch(`${BACKEND_URL}/api/admin/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({
+        title, format, mode: mode || null, map: map || null, description: description || null,
+        event_date: new Date(dateVal).toISOString(), image_url, video_url,
+      }),
+    });
+    if(!res.ok) throw new Error('create failed');
+
+    showToast('Событие создано ✅');
+    document.getElementById('createEventForm').reset();
+    document.getElementById('newEvImageName').textContent = '';
+    document.getElementById('newEvVideoName').textContent = '';
+    toggleCreateEventForm();
+    loadRealEvents();
+    loadAdminApplications();
+  }catch(e){
+    showToast('Не удалось создать событие');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Создать событие';
+  }
+}
+
 async function loadAdminApplications(){
   const container = document.getElementById('adminApplicationsList');
   if(!container) return;
@@ -1479,7 +1720,7 @@ async function loadAdminApplications(){
               <div style="font-weight:700; font-size:13.5px;">${a.discord_username}</div>
               ${a.note ? `<div style="color:var(--text-dim); font-size:11.5px; margin-top:2px;">«${a.note}»</div>` : ''}
             </div>
-            <input placeholder="Команда" value="${a.assigned_team || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text); width:100px; font-size:12.5px;" onchange="updateApplication('${a.id}', {assigned_team: this.value})">
+            <input placeholder="Команда" list="teamOptions" value="${a.assigned_team || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text); width:100px; font-size:12.5px;" onchange="updateApplication('${a.id}', {assigned_team: this.value})">
             <input placeholder="Время" value="${a.assigned_time || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text); width:90px; font-size:12.5px;" onchange="updateApplication('${a.id}', {assigned_time: this.value})">
             <select style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text); font-size:12.5px;" onchange="updateApplication('${a.id}', {status: this.value})">
               <option value="pending" ${a.status==='pending'?'selected':''}>Ожидает</option>
