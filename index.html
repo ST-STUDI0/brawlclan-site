@@ -262,10 +262,26 @@ nav button.active::after{
 .bic-emoji{position:relative; z-index:0; line-height:1;}
 .roster-table .bic{background:rgba(255,255,255,.06);}
 
-.match-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+.match-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; overflow:hidden;}
+.match-icon img{width:24px; height:24px; object-fit:contain;}
 .match-type{flex:1;}
 .match-type .t1{font-weight:700; font-size:14px;}
 .match-type .t2{color:var(--text-dim); font-size:12px;}
+
+/* ---------- ИСТОРИЯ МАТЧЕЙ: строка со счётом и раскрывающимся составом ---------- */
+.history-row{border-bottom:1px solid var(--stroke);}
+.history-row:last-child{border-bottom:none;}
+.history-top{display:flex; align-items:center; gap:14px; padding:13px 6px; transition:background .15s;}
+.history-top:hover{background:rgba(255,255,255,0.025); border-radius:10px;}
+.score-line{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+.team-toggle{font-size:12px; font-weight:700; color:var(--text-dim); cursor:pointer; padding:4px 8px; border-radius:6px; transition:background .15s, color .15s; text-transform:uppercase; letter-spacing:.3px;}
+.team-toggle:hover{background:rgba(255,255,255,.06); color:var(--text);}
+.team-toggle.winner{color:var(--green);}
+.team-toggle.loser{color:var(--red);}
+.score-line .score{font-family:var(--font-display); font-weight:800; font-size:15px; min-width:44px; text-align:center;}
+.history-expand{display:none; padding:4px 6px 14px 68px;}
+.history-expand.open{display:block;}
+.history-expand .player-chip{display:inline-block; background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:5px 10px; font-size:12px; margin:0 6px 6px 0;}
 .match-score{font-weight:800; font-size:14.5px; display:flex; align-items:center; gap:6px; min-width:70px; justify-content:center;}
 .match-time{color:var(--text-faint); font-size:12.5px; min-width:110px; text-align:right;}
 
@@ -1461,19 +1477,61 @@ function renderHistoryFromEvents(events){
     const [s1, s2] = e.result.split('-').map(n => parseInt(n.trim(), 10));
     const won = !isNaN(s1) && !isNaN(s2) && s1 > s2;
     const lost = !isNaN(s1) && !isNaN(s2) && s2 > s1;
-    const resultClass = won ? 'win' : lost ? 'lose' : '';
-    const resultLabel = won ? 'ПОБЕДА' : lost ? 'ПОРАЖЕНИЕ' : 'НИЧЬЯ';
     const dateStr = e.event_date ? new Date(e.event_date).toLocaleDateString('ru-RU', {day:'2-digit', month:'short'}) : '';
+    const modeIcon = modeIconPath(e.mode);
+    const iconHtml = modeIcon
+      ? `<img src="${modeIcon}" alt="" onerror="this.parentElement.textContent='🎮'">`
+      : '🎮';
     return `
-      <div class="match-row" style="cursor:pointer;" onclick="openMatchModal('${e.id}')">
-        <div class="match-icon" style="background:${won?'rgba(60,232,122,.12)':lost?'rgba(255,77,109,.12)':'rgba(255,255,255,.06)'}; color:${won?'var(--green)':lost?'var(--red)':'var(--text-dim)'};">${won?'🏆':lost?'💀':'➖'}</div>
-        <div class="match-type"><div class="t1">${e.title}</div><div class="t2">${e.map || e.mode || ''}</div></div>
-        ${resultClass ? `<span class="badge ${resultClass}">${resultLabel}</span>` : ''}
-        <div class="match-score">${e.result}</div>
-        <div class="match-time">${dateStr}</div>
+      <div class="history-row" data-event-id="${e.id}">
+        <div class="history-top">
+          <div class="match-icon" style="background:rgba(255,255,255,.06);">${iconHtml}</div>
+          <div class="match-type"><div class="t1">${e.title}</div><div class="t2">${dateStr}${e.map ? ' · ' + e.map : ''}</div></div>
+          <div class="score-line">
+            <span class="team-toggle ${won ? 'winner' : lost ? 'loser' : ''}" data-team="Команда 1">Команда 1</span>
+            <span class="score">${e.result}</span>
+            <span class="team-toggle ${lost ? 'winner' : won ? 'loser' : ''}" data-team="Команда 2">Команда 2</span>
+          </div>
+        </div>
+        <div class="history-expand" id="hist-expand-${e.id}"></div>
       </div>`;
   }).join('');
 }
+
+// Клик по названию команды в истории — разворачивает/сворачивает список её игроков.
+// Данные подгружаются лениво (при первом клике) и кэшируются, чтобы не дёргать сервер повторно.
+const historyLineupCache = {};
+document.getElementById('historyList')?.addEventListener('click', async (e) => {
+  const toggle = e.target.closest('.team-toggle');
+  if(!toggle) return;
+  const row = toggle.closest('.history-row');
+  const eventId = row.dataset.eventId;
+  const teamName = toggle.dataset.team;
+  const expandEl = document.getElementById(`hist-expand-${eventId}`);
+
+  // повторный клик по той же команде — просто сворачиваем
+  if(expandEl.classList.contains('open') && expandEl.dataset.team === teamName){
+    expandEl.classList.remove('open');
+    return;
+  }
+
+  expandEl.dataset.team = teamName;
+  expandEl.classList.add('open');
+  expandEl.innerHTML = 'Загрузка...';
+
+  try{
+    if(!historyLineupCache[eventId]){
+      const res = await fetch(`${BACKEND_URL}/api/events/${eventId}/lineup`);
+      historyLineupCache[eventId] = res.ok ? await res.json() : [];
+    }
+    const players = historyLineupCache[eventId].filter(p => p.assigned_team === teamName);
+    expandEl.innerHTML = players.length
+      ? players.map(p => `<span class="player-chip">${p.discord_username}</span>`).join('')
+      : '<span style="color:var(--text-faint); font-size:12px;">Состав не назначен.</span>';
+  }catch(err){
+    expandEl.innerHTML = '<span style="color:var(--red); font-size:12px;">Не удалось загрузить состав.</span>';
+  }
+});
 
 /* ============ EVENTS RENDER ============ */
 function renderEvents(){
