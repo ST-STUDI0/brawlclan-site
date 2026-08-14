@@ -282,6 +282,21 @@ nav button.active::after{
 .history-expand{display:none; padding:4px 6px 14px 68px;}
 .history-expand.open{display:block;}
 .history-expand .player-chip{display:inline-block; background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:5px 10px; font-size:12px; margin:0 6px 6px 0;}
+
+/* ---------- ИСТОРИЯ ИГРОКОВ (лидерборд побед/поражений) ---------- */
+.player-history-row{display:flex; align-items:center; gap:14px; padding:12px 8px; border-bottom:1px solid rgba(130,120,255,0.08);}
+.player-history-row:last-child{border-bottom:none;}
+.player-history-row .rank{width:26px; text-align:center; font-family:var(--font-display); font-weight:800; color:var(--text-faint); font-size:13px;}
+.player-history-row .rank.top1{color:var(--gold-1);}
+.player-history-row .rank.top2{color:var(--cyan);}
+.player-history-row .rank.top3{color:#c3aeff;}
+.player-history-row .name{flex:1; font-weight:700; font-size:13.5px;}
+.player-history-row .wl-bar-track{width:110px; height:8px; border-radius:5px; background:rgba(255,77,109,.25); overflow:hidden;}
+.player-history-row .wl-bar-fill{height:100%; background:var(--green); border-radius:5px 0 0 5px;}
+.player-history-row .stat{display:flex; align-items:center; gap:6px; font-size:12.5px; min-width:64px; justify-content:flex-end;}
+.player-history-row .stat .win-n{color:var(--green); font-weight:800;}
+.player-history-row .stat .lose-n{color:var(--red); font-weight:800;}
+.player-history-row .winrate{font-family:var(--font-display); font-weight:800; font-size:13px; color:var(--gold-1); min-width:48px; text-align:right;}
 .match-score{font-weight:800; font-size:14.5px; display:flex; align-items:center; gap:6px; min-width:70px; justify-content:center;}
 .match-time{color:var(--text-faint); font-size:12.5px; min-width:110px; text-align:right;}
 
@@ -700,21 +715,16 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 
 <!-- ============ CLUB LEAGUE ============ -->
 <section id="page-league" class="page">
-  <div class="season-banner">
+  <div class="season-banner" id="seasonBanner" style="display:none;">
     <div class="season-left">
-      <div class="eyebrow">Текущий сезон</div>
-      <h2>Клубная лига · Май 2026</h2>
+      <div class="eyebrow" id="seasonEyebrow">Ближайшее событие</div>
+      <h2 id="seasonTitle">—</h2>
       <div class="season-score">
-        <span class="n">4/5</span>
-        <span style="color:var(--text-dim); font-size:13px;">побед · Лига «Мастер»</span>
+        <span class="n" id="seasonWL">0/0</span>
+        <span style="color:var(--text-dim); font-size:13px;">побед за всё время в кланских событиях</span>
       </div>
-      <div class="bar-bg" style="width:220px;"><div class="bar-fill" style="width:80%;"></div></div>
     </div>
-    <div class="countdown">
-      <div class="box"><div class="n">14</div><div class="l">часов</div></div>
-      <div class="box"><div class="n">22</div><div class="l">минуты</div></div>
-      <div class="box"><div class="n">08</div><div class="l">секунды</div></div>
-    </div>
+    <div class="countdown" id="seasonCountdown"></div>
   </div>
 
   <div class="panel">
@@ -728,8 +738,15 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
   </div>
 
   <div class="panel">
-    <div class="panel-header"><h2>🕘 История матчей</h2></div>
+    <div class="panel-header">
+      <h2>🕘 История</h2>
+      <div class="period-switch">
+        <button class="active" id="historyTabMatches" onclick="switchHistoryTab('matches')">Матчи</button>
+        <button id="historyTabPlayers" onclick="switchHistoryTab('players')">Игроки</button>
+      </div>
+    </div>
     <div id="historyList"></div>
+    <div id="playerHistoryList" style="display:none;"></div>
   </div>
 </section>
 
@@ -1500,7 +1517,7 @@ function renderHistoryFromEvents(events){
 
 // Клик по названию команды в истории — разворачивает/сворачивает список её игроков.
 // Данные подгружаются лениво (при первом клике) и кэшируются, чтобы не дёргать сервер повторно.
-const historyLineupCache = {};
+let historyLineupCache = {};
 document.getElementById('historyList')?.addEventListener('click', async (e) => {
   const toggle = e.target.closest('.team-toggle');
   if(!toggle) return;
@@ -1532,6 +1549,113 @@ document.getElementById('historyList')?.addEventListener('click', async (e) => {
     expandEl.innerHTML = '<span style="color:var(--red); font-size:12px;">Не удалось загрузить состав.</span>';
   }
 });
+
+/* ============ ИСТОРИЯ ИГРОКОВ (побед/поражений) ============ */
+function switchHistoryTab(tab){
+  const isMatches = tab === 'matches';
+  document.getElementById('historyList').style.display = isMatches ? '' : 'none';
+  document.getElementById('playerHistoryList').style.display = isMatches ? 'none' : '';
+  document.getElementById('historyTabMatches').classList.toggle('active', isMatches);
+  document.getElementById('historyTabPlayers').classList.toggle('active', !isMatches);
+  if(!isMatches) renderPlayerHistory();
+}
+
+let playerHistoryLoaded = false;
+async function renderPlayerHistory(){
+  const container = document.getElementById('playerHistoryList');
+  if(playerHistoryLoaded) return; // считаем один раз за загрузку страницы, дальше просто показываем/скрываем
+  container.innerHTML = 'Подсчитываем статистику...';
+
+  const finished = REAL_EVENTS_CACHE.filter(e => e.result && e.result.includes('-'));
+  if(!finished.length){
+    container.innerHTML = '<p style="color:var(--text-dim);">Пока нет завершённых событий для статистики.</p>';
+    return;
+  }
+
+  const stats = {}; // { discordUsername: {wins, losses} }
+  const bump = (name, field) => {
+    if(!stats[name]) stats[name] = { wins: 0, losses: 0 };
+    stats[name][field]++;
+  };
+
+  try{
+    await Promise.all(finished.map(async ev => {
+      const [s1, s2] = ev.result.split('-').map(n => parseInt(n.trim(), 10));
+      if(isNaN(s1) || isNaN(s2) || s1 === s2) return; // ничьи не считаем в статистику побед/поражений
+      const winningTeam = s1 > s2 ? 'Команда 1' : 'Команда 2';
+      const losingTeam = s1 > s2 ? 'Команда 2' : 'Команда 1';
+
+      if(!historyLineupCache[ev.id]){
+        const res = await fetch(`${BACKEND_URL}/api/events/${ev.id}/lineup`);
+        historyLineupCache[ev.id] = res.ok ? await res.json() : [];
+      }
+      historyLineupCache[ev.id].forEach(p => {
+        if(p.assigned_team === winningTeam) bump(p.discord_username, 'wins');
+        else if(p.assigned_team === losingTeam) bump(p.discord_username, 'losses');
+      });
+    }));
+
+    const rows = Object.entries(stats)
+      .map(([name, s]) => ({ name, ...s, total: s.wins + s.losses, winrate: s.wins + s.losses ? Math.round(s.wins / (s.wins + s.losses) * 100) : 0 }))
+      .sort((a, b) => b.wins - a.wins || b.winrate - a.winrate);
+
+    if(!rows.length){
+      container.innerHTML = '<p style="color:var(--text-dim);">Нет данных — ни у одного завершённого события не назначены команды.</p>';
+      return;
+    }
+
+    container.innerHTML = rows.map((r, i) => {
+      const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const winPct = r.total ? (r.wins / r.total * 100) : 0;
+      return `
+        <div class="player-history-row">
+          <div class="rank ${rankClass}">${i + 1}</div>
+          <div class="name">${r.name}</div>
+          <div class="stat"><span class="win-n">${r.wins}П</span> / <span class="lose-n">${r.losses}П</span></div>
+          <div class="wl-bar-track"><div class="wl-bar-fill" style="width:${winPct}%;"></div></div>
+          <div class="winrate">${r.winrate}%</div>
+        </div>`;
+    }).join('');
+    playerHistoryLoaded = true;
+  }catch(e){
+    container.innerHTML = '<p style="color:var(--red);">Не удалось посчитать статистику.</p>';
+  }
+}
+
+/* ============ БАННЕР "БЛИЖАЙШЕЕ СОБЫТИЕ" (вместо старого демо-сезона) ============ */
+let seasonBannerCountdownTimer = null;
+function updateSeasonBanner(events){
+  const banner = document.getElementById('seasonBanner');
+  if(!banner) return;
+
+  const finishedCount = events.filter(e => e.result).length;
+  document.getElementById('seasonWL').textContent = finishedCount;
+
+  const upcoming = events
+    .filter(e => e.event_date && new Date(e.event_date).getTime() > Date.now() && !e.result)
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))[0];
+
+  if(seasonBannerCountdownTimer) clearInterval(seasonBannerCountdownTimer);
+
+  if(!upcoming){
+    document.getElementById('seasonTitle').textContent = 'Нет запланированных событий';
+    document.getElementById('seasonCountdown').innerHTML = '';
+    banner.style.display = 'flex';
+    return;
+  }
+
+  document.getElementById('seasonTitle').textContent = upcoming.title;
+  const target = new Date(upcoming.event_date).getTime();
+  const tick = () => {
+    const parts = formatCountdownParts(target);
+    document.getElementById('seasonCountdown').innerHTML = parts
+      ? `<div class="box"><div class="n">${parts.h}</div><div class="l">часов</div></div><div class="box"><div class="n">${parts.m}</div><div class="l">минуты</div></div><div class="box"><div class="n">${parts.s}</div><div class="l">секунды</div></div>`
+      : `<div class="box"><div class="n">🔥</div><div class="l">началось</div></div>`;
+  };
+  tick();
+  seasonBannerCountdownTimer = setInterval(tick, 1000);
+  banner.style.display = 'flex';
+}
 
 /* ============ EVENTS RENDER ============ */
 function renderEvents(){
@@ -1652,10 +1776,16 @@ async function loadRealEvents(){
     const events = await res.json();
     if(!Array.isArray(events) || events.length===0) return;
     REAL_EVENTS_CACHE = events;
+    historyLineupCache = {}; // сбрасываем кэш составов — данные могли измениться (админ что-то поправил)
     renderRealEvents(events);
     renderScheduleFromEvents(events);
     renderLineupFromEvents(events);
     renderHistoryFromEvents(events);
+    updateSeasonBanner(events);
+    playerHistoryLoaded = false; // данные обновились — при следующем открытии вкладки "Игроки" пересчитаем
+    if(document.getElementById('playerHistoryList')?.style.display !== 'none'){
+      renderPlayerHistory(); // если вкладка "Игроки" уже открыта — обновим сразу
+    }
   }catch(e){
     console.warn('Не удалось загрузить события с бэкенда, остаёмся на демо:', e);
   }
