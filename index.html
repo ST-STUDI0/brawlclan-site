@@ -881,6 +881,8 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 
 <div class="toast" id="toast"></div>
 
+<audio id="introSound" src="img/sound-effect-for-ghost-town-trailer.wav" preload="auto"></audio>
+
 <script>
 /* ============ STARFIELD ============ */
 (function(){
@@ -2424,6 +2426,19 @@ fetchMe().then(() => {
   loadRealEvents();
   if (currentUser?.isAdmin) loadAdminApplications();
 });
+
+// Звук при заходе на сайт — один раз при загрузке страницы, не при клике по вкладкам меню.
+// Многие браузеры блокируют звук без предварительного взаимодействия пользователя со страницей —
+// если так, тихо пробуем ещё раз при самом первом клике/касании где угодно на странице.
+(function playIntroSound(){
+  const sound = document.getElementById('introSound');
+  if(!sound) return;
+  const tryPlay = () => sound.play().catch(() => {});
+  tryPlay();
+  const fallback = () => { tryPlay(); document.removeEventListener('click', fallback); document.removeEventListener('keydown', fallback); };
+  document.addEventListener('click', fallback, { once:true });
+  document.addEventListener('keydown', fallback, { once:true });
+})();
 </script>
 </body>
 </html>
