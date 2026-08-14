@@ -463,10 +463,11 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
       <button data-page="league">Клубная лига</button>
       <button data-page="events">События</button>
       <button data-page="gallery">Галерея</button>
+      <button data-page="admin" id="adminNavBtn" style="display:none;">Админ</button>
     </nav>
     <div style="display:flex; align-items:center; gap:12px;">
-      <button class="btn-login" onclick="showToast('Вход через Discord — демо-режим')">
-        <span>👤</span> Войти
+      <button class="btn-login" id="loginBtn" onclick="handleLoginClick()">
+        <span id="loginIcon">👤</span> <span id="loginLabel">Войти</span>
       </button>
       <button class="burger" onclick="document.getElementById('mainNav').classList.toggle('mobile-open')">☰</button>
     </div>
@@ -675,6 +676,9 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 <section id="page-events" class="page">
   <div class="panel">
     <div class="panel-header"><h2>🎉 Предстоящие турниры и челленджи</h2></div>
+    <div id="loginHint" style="display:none; color:var(--text-dim); font-size:13px; margin-bottom:14px; padding:12px 16px; background:rgba(47,216,255,0.06); border:1px solid var(--stroke); border-radius:12px;">
+      Войди через Discord (кнопка вверху справа), чтобы подавать заявки на участие — доступно только реальным участникам клана.
+    </div>
     <div class="events-grid" id="eventsGrid"></div>
   </div>
 
@@ -698,6 +702,14 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
         <button type="submit" class="btn-primary" style="justify-content:center;">Подать заявку</button>
       </form>
     </div>
+  </div>
+</section>
+
+<!-- ============ ADMIN ============ -->
+<section id="page-admin" class="page">
+  <div class="panel">
+    <div class="panel-header"><h2>🛠 Заявки на клановые события</h2></div>
+    <div id="adminApplicationsList" style="color:var(--text-dim); font-size:14px;">Загрузка...</div>
   </div>
 </section>
 
@@ -759,6 +771,7 @@ function goTo(page){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
   document.getElementById('mainNav').classList.remove('mobile-open');
   window.scrollTo({top:0, behavior:'smooth'});
+  if(page === 'admin' && typeof loadAdminApplications === 'function') loadAdminApplications();
 }
 document.querySelectorAll('nav button[data-page]').forEach(b=>{
   b.addEventListener('click', ()=>goTo(b.dataset.page));
@@ -1208,6 +1221,186 @@ function renderGallery(){
    ========================================================================== */
 const BACKEND_URL = "https://brawlclan-backend.onrender.com";
 
+/* ==========================================================================
+   ВХОД ЧЕРЕЗ DISCORD
+   ========================================================================== */
+let currentUser = null; // {id, username, avatar, isAdmin} когда авторизован
+
+function getAuthToken(){ return localStorage.getItem('discord_token'); }
+function setAuthToken(t){ if(t) localStorage.setItem('discord_token', t); else localStorage.removeItem('discord_token'); }
+
+async function fetchMe(){
+  const token = getAuthToken();
+  if(!token){ currentUser = null; updateAuthUI(); return; }
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/me`, { headers: { Authorization: `Bearer ${token}` }});
+    if(!res.ok) throw new Error('unauth');
+    currentUser = await res.json();
+  }catch(e){
+    currentUser = null;
+    setAuthToken(null);
+  }
+  updateAuthUI();
+}
+
+function updateAuthUI(){
+  const loginLabel = document.getElementById('loginLabel');
+  const loginIcon = document.getElementById('loginIcon');
+  const adminBtn = document.getElementById('adminNavBtn');
+  const loginHint = document.getElementById('loginHint');
+  if(currentUser){
+    if(loginLabel) loginLabel.textContent = currentUser.username;
+    if(loginIcon) loginIcon.textContent = '✅';
+    if(adminBtn) adminBtn.style.display = currentUser.isAdmin ? '' : 'none';
+    if(loginHint) loginHint.style.display = 'none';
+  } else {
+    if(loginLabel) loginLabel.textContent = 'Войти';
+    if(loginIcon) loginIcon.textContent = '👤';
+    if(adminBtn) adminBtn.style.display = 'none';
+    if(loginHint) loginHint.style.display = '';
+  }
+}
+
+function handleLoginClick(){
+  if(currentUser){
+    if(confirm('Выйти из аккаунта?')){
+      setAuthToken(null);
+      currentUser = null;
+      updateAuthUI();
+      showToast('Вы вышли из аккаунта');
+    }
+    return;
+  }
+  window.location.href = `${BACKEND_URL}/auth/discord/login`;
+}
+
+function handleAuthRedirect(){
+  const hash = window.location.hash;
+  if(!hash) return;
+  const params = new URLSearchParams(hash.slice(1));
+  const token = params.get('token');
+  const error = params.get('auth_error');
+  if(token){
+    setAuthToken(token);
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    showToast('Вход через Discord выполнен ✅');
+  } else if(error){
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    const messages = {
+      not_in_guild: '❌ Ты не состоишь в Discord-сервере клана',
+      not_clan_member: '❌ У тебя нет роли участника клана в Discord',
+      no_code: '❌ Ошибка входа через Discord',
+      server_error: '❌ Ошибка сервера при входе',
+    };
+    showToast(messages[error] || '❌ Не удалось войти');
+  }
+}
+
+/* ==========================================================================
+   СОБЫТИЯ (реальные, с бэкенда) И ПОДАЧА ЗАЯВОК
+   ========================================================================== */
+async function loadRealEvents(){
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/events`);
+    if(!res.ok) return;
+    const events = await res.json();
+    if(!Array.isArray(events) || events.length===0) return;
+    renderRealEvents(events);
+  }catch(e){
+    console.warn('Не удалось загрузить события с бэкенда, остаёмся на демо:', e);
+  }
+}
+
+function renderRealEvents(events){
+  const banners = ['b1','b2','b3'];
+  const icons = ['🏆','💥','🎯','⚡','🔥','🌟'];
+  document.getElementById('eventsGrid').innerHTML = events.map((e,i)=>{
+    const dateStr = e.event_date
+      ? new Date(e.event_date).toLocaleString('ru-RU', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})
+      : 'Дата уточняется';
+    const btnLabel = currentUser ? 'Подать заявку' : 'Войдите, чтобы подать заявку';
+    return `
+      <div class="event-card">
+        <div class="event-banner ${banners[i % banners.length]}">${icons[i % icons.length]}</div>
+        <div class="event-body">
+          <h3>${e.title}</h3>
+          <div class="meta"><span>📅 ${dateStr}</span>${e.mode ? `<span>🎮 ${e.mode}</span>` : ''}</div>
+          ${e.description ? `<div style="color:var(--text-dim); font-size:12.5px; margin-bottom:14px;">${e.description}</div>` : ''}
+          <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="applyToEvent('${e.id}', ${JSON.stringify(e.title)})">${btnLabel}</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function applyToEvent(eventId, title){
+  if(!currentUser){
+    showToast('Сначала войди через Discord (кнопка вверху справа)');
+    return;
+  }
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/events/${eventId}/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ note: '' }),
+    });
+    if(!res.ok) throw new Error('apply failed');
+    showToast(`Заявка на «${title}» отправлена ✅`);
+  }catch(e){
+    showToast('Не удалось отправить заявку, попробуй позже');
+  }
+}
+
+/* ==========================================================================
+   АДМИН-ПАНЕЛЬ (видна только тебе, после входа с твоим Discord ID в ADMIN_DISCORD_IDS)
+   ========================================================================== */
+async function loadAdminApplications(){
+  const container = document.getElementById('adminApplicationsList');
+  if(!container) return;
+  if(!currentUser || !currentUser.isAdmin){
+    container.innerHTML = '<p>Доступ только для админа клана.</p>';
+    return;
+  }
+  container.innerHTML = 'Загрузка...';
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/admin/applications`, { headers: { Authorization: `Bearer ${getAuthToken()}` }});
+    if(!res.ok) throw new Error('fail');
+    const apps = await res.json();
+    if(!apps.length){ container.innerHTML = '<p style="color:var(--text-dim);">Заявок пока нет.</p>'; return; }
+    container.innerHTML = apps.map(a => `
+      <div class="match-row" style="align-items:flex-start; flex-wrap:wrap; gap:10px;">
+        <div style="flex:1; min-width:180px;">
+          <div style="font-weight:700;">${a.discord_username}</div>
+          <div style="color:var(--text-dim); font-size:12px;">${a.events?.title || 'Событие удалено'}</div>
+          ${a.note ? `<div style="color:var(--text-dim); font-size:12px; margin-top:4px;">«${a.note}»</div>` : ''}
+        </div>
+        <input placeholder="Команда" value="${a.assigned_team || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text); width:110px;" onchange="updateApplication('${a.id}', {assigned_team: this.value})">
+        <input placeholder="Время" value="${a.assigned_time || ''}" style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text); width:110px;" onchange="updateApplication('${a.id}', {assigned_time: this.value})">
+        <select style="background:rgba(255,255,255,.04); border:1px solid var(--stroke); border-radius:8px; padding:8px 10px; color:var(--text);" onchange="updateApplication('${a.id}', {status: this.value})">
+          <option value="pending" ${a.status==='pending'?'selected':''}>Ожидает</option>
+          <option value="approved" ${a.status==='approved'?'selected':''}>Подтверждено</option>
+          <option value="rejected" ${a.status==='rejected'?'selected':''}>Отклонено</option>
+        </select>
+      </div>
+    `).join('');
+  }catch(e){
+    container.innerHTML = '<p style="color:var(--red);">Не удалось загрузить заявки.</p>';
+  }
+}
+
+async function updateApplication(id, patch){
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/admin/applications/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type':'application/json', Authorization: `Bearer ${getAuthToken()}` },
+      body: JSON.stringify(patch),
+    });
+    if(!res.ok) throw new Error('fail');
+    showToast('Сохранено ✅');
+  }catch(e){
+    showToast('Не удалось сохранить изменения');
+  }
+}
+
 function brawlerIconFallback(name) {
   if (!name) return "⭐";
   let hash = 0;
@@ -1318,6 +1511,13 @@ renderGallery();
 // Пытаемся подтянуть реальные данные с бэкенда (см. BACKEND_URL выше)
 loadRealData();
 setInterval(loadRealData, 10 * 60 * 1000); // обновление раз в 10 минут
+
+// Вход через Discord + реальные события
+handleAuthRedirect(); // проверяем, не вернулись ли мы только что из Discord с токеном
+fetchMe().then(() => {
+  loadRealEvents();
+  if (currentUser?.isAdmin) loadAdminApplications();
+});
 </script>
 </body>
 </html>
