@@ -689,10 +689,10 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
   <div class="panel">
     <div class="panel-header"><h2>📊 Общая статистика клана</h2></div>
     <div class="grid-4">
-      <div class="mini-metric"><div class="v">87 450</div><div class="l">Суммарные кубки</div></div>
-      <div class="mini-metric"><div class="v">3 123</div><div class="l">Средние кубки/игрока</div></div>
-      <div class="mini-metric"><div class="v">62</div><div class="l">Побед в КЛ за сезон</div></div>
-      <div class="mini-metric"><div class="v">67%</div><div class="l">Общий винрейт клана</div></div>
+      <div class="mini-metric"><div class="v" id="statTotalTrophies">—</div><div class="l">Суммарные кубки</div></div>
+      <div class="mini-metric"><div class="v" id="statAvgTrophies">—</div><div class="l">Средние кубки/игрока</div></div>
+      <div class="mini-metric"><div class="v" id="statRecentWins">—</div><div class="l">Побед в последних боях</div></div>
+      <div class="mini-metric"><div class="v" id="statRecentWinrate">—</div><div class="l">Винрейт по последним боям</div></div>
     </div>
   </div>
 
@@ -727,11 +727,11 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 
   <div class="grid-2">
     <div class="panel">
-      <div class="panel-header"><h2>🛡 Победы / поражения по сезонам</h2></div>
+      <div class="panel-header"><h2>🛡 Победы / поражения (последние бои клана)</h2></div>
       <div class="chart-box" style="height:240px;"><canvas id="wlChart"></canvas></div>
     </div>
     <div class="panel">
-      <div class="panel-header"><h2>🗺 Лучшие карты клана</h2></div>
+      <div class="panel-header"><h2>🗺 Популярные карты клана <span style="color:var(--text-dim); font-weight:600; font-size:11px;">(по последним боям)</span></h2></div>
       <div id="mapsList"></div>
     </div>
   </div>
@@ -1412,8 +1412,10 @@ function renderMultiLine(){
 }
 
 /* win/loss bar */
+let wlChartInstance = null;
 function renderWL(){
-  new Chart(document.getElementById('wlChart'), {
+  if(wlChartInstance) wlChartInstance.destroy();
+  wlChartInstance = new Chart(document.getElementById('wlChart'), {
     type:'bar',
     data:{labels:['Сезон 1','Сезон 2','Сезон 3','Сезон 4','Сезон 5'],
       datasets:[
@@ -1436,6 +1438,49 @@ function renderMaps(){
       <div class="map-pct">${m.pct}%</div>
     </div>
   `).join('');
+}
+
+// Реальная статистика по последним боям клана (см. /api/battle-stats на бэкенде)
+async function loadRealBattleStats(){
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/battle-stats`);
+    if(!res.ok) return;
+    const s = await res.json();
+
+    const winsEl = document.getElementById('statRecentWins');
+    const winrateEl = document.getElementById('statRecentWinrate');
+    if(winsEl) winsEl.textContent = s.wins;
+    if(winrateEl) winrateEl.textContent = s.winratePct + '%';
+
+    if(wlChartInstance) wlChartInstance.destroy();
+    wlChartInstance = new Chart(document.getElementById('wlChart'), {
+      type:'bar',
+      data:{
+        labels:['Последние бои клана'],
+        datasets:[
+          {label:'Победы', data:[s.wins], backgroundColor:'#3ce87a', borderRadius:6},
+          {label:'Поражения', data:[s.losses], backgroundColor:'#ff4d6d', borderRadius:6},
+        ]
+      },
+      options:{
+        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom', labels:{boxWidth:10,padding:16}}},
+        scales:{x:{stacked:true, grid:{color:'rgba(130,120,255,0.08)'}}, y:{stacked:true, grid:{display:false}}}
+      }
+    });
+
+    if(s.topMaps && s.topMaps.length){
+      document.getElementById('mapsList').innerHTML = s.topMaps.map(m => `
+        <div class="map-row">
+          <div class="map-name">${m.name} <span style="color:var(--text-faint); font-size:11px;">(${m.plays} боёв)</span></div>
+          <div class="map-bar-track"><div class="map-bar-fill" style="width:${m.winrate}%;"></div></div>
+          <div class="map-pct">${m.winrate}%</div>
+        </div>
+      `).join('');
+    }
+  }catch(e){
+    console.warn('Не удалось загрузить статистику боёв:', e);
+  }
 }
 
 function renderTopFighters(){
@@ -2281,6 +2326,11 @@ async function loadRealData() {
       const chip2 = document.querySelector(".hero-chips .chip:nth-child(2) .val");
       if (chip1) chip1.textContent = club.trophies.toLocaleString("ru-RU");
       if (chip2) chip2.textContent = `${club.members.length}/30`;
+
+      const totalEl = document.getElementById('statTotalTrophies');
+      const avgEl = document.getElementById('statAvgTrophies');
+      if (totalEl) totalEl.textContent = club.trophies.toLocaleString("ru-RU");
+      if (avgEl) avgEl.textContent = Math.round(club.trophies / club.members.length).toLocaleString("ru-RU");
     }
 
     renderTop5();
@@ -2290,6 +2340,7 @@ async function loadRealData() {
     initCompareSelects();
     updateRadar();
     loadRosterActivity();
+    loadRealBattleStats();
 
     showToast("Статистика обновлена из Brawl Stars API ✅");
   } catch (err) {
