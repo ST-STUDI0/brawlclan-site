@@ -548,6 +548,9 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
 /* ---------- RESPONSIVE ---------- */
+.table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -4px;}
+.table-scroll table{min-width:640px;}
+
 @media(max-width:980px){
   .hero{grid-template-columns:1fr; padding-top:36px;}
   .hero-visual{max-width:280px; margin:0 auto;}
@@ -555,17 +558,86 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
   nav{display:none;}
   .burger{display:block;}
   .recruit-box{grid-template-columns:1fr;}
+  .two-teams-grid{grid-template-columns:1fr;}
+  .battle-teams{grid-template-columns:1fr;}
+  .admin-create-form{grid-template-columns:1fr;}
+  .brawler-card-grid{grid-template-columns:repeat(3,1fr);}
 }
 @media(max-width:980px){
   nav.mobile-open{
     display:flex; flex-direction:column; position:absolute; top:100%; left:0; right:0;
     background:rgba(7,7,15,0.97); border-bottom:1px solid var(--stroke); padding:10px 20px 18px;
+    z-index:60; max-height:80vh; overflow-y:auto;
   }
+  nav.mobile-open button{width:100%; text-align:left; padding:12px 10px;}
 }
+
+@media(max-width:768px){
+  .wrap{padding:0 16px;}
+  .header-inner{padding:12px 0;}
+  .logo-text{font-size:13px;}
+  .logo-text span{font-size:9px;}
+  .btn-login span:not(#loginIcon){display:none;} /* на очень узких — оставляем только иконку входа */
+  .hero{padding-top:24px; gap:24px;}
+  .hero-chips{gap:8px;}
+  .chip{min-width:120px; padding:10px 14px;}
+  .hero-cta{gap:10px;}
+  .btn-primary, .btn-secondary{padding:13px 18px; font-size:13px;}
+
+  .podium-wrap{gap:8px;}
+  .podium-card{width:31%; padding:12px 6px 0;}
+  .podium-card.first{width:36%; padding-top:18px;}
+  .podium-name{font-size:11.5px;}
+  .podium-trophies{font-size:12.5px;}
+  .podium-rank-bar{font-size:13px; padding:7px;}
+
+  .season-banner{flex-direction:column; align-items:flex-start; padding:20px;}
+  .countdown, .countdown-block{width:100%;}
+  .countdown .box, .countdown-block .cbox{flex:1;}
+
+  .roster-controls{flex-direction:column; align-items:stretch;}
+  .role-filters{overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px;}
+  .role-filters button{flex-shrink:0;}
+
+  .modal-box{width:calc(100% - 24px); margin:12px; padding:20px; max-height:88vh; overflow-y:auto;}
+  .modal-grid{grid-template-columns:1fr 1fr; gap:8px;}
+  .match-modal-banner{height:120px;}
+
+  .brawler-card-grid{grid-template-columns:repeat(2,1fr);}
+  .battle-card-top{flex-wrap:wrap; gap:8px;}
+  .battle-result-badge{margin-left:auto;}
+
+  .compare-selects{flex-direction:column;}
+  .compare-selects select{width:100%;}
+
+  .player-history-row{flex-wrap:wrap; gap:8px;}
+  .player-history-row .wl-bar-track{display:none;} /* полоска не критична на мобиле, оставляем цифры */
+  .player-history-row .name{flex:1 1 100%; order:1;}
+  .player-history-row .rank{order:0;}
+
+  .roster-activity-grid{grid-template-columns:1fr 1fr;}
+  .events-grid{grid-template-columns:1fr;}
+
+  .season-score .n{font-size:26px;}
+}
+
 @media(max-width:640px){
   .p-best{display:none;}
   .match-time{min-width:70px; font-size:11px;}
   .roster-table thead th:nth-child(4), .roster-table tbody td:nth-child(4){display:none;}
+}
+
+@media(max-width:480px){
+  .clan-title{font-size:32px;}
+  .hero-chips .chip{min-width:100%;}
+  .stat-card, .mini-metric{padding:16px;}
+  .podium-card{width:100%;}
+  .podium-wrap{flex-direction:column; align-items:center;}
+  .podium-card.first{width:100%; transform:none; order:-1;}
+  .grid-4, .brawler-card-grid{grid-template-columns:repeat(2,1fr);}
+  .roster-activity-grid{grid-template-columns:1fr;}
+  .admin-create-form .file-input-label{flex-wrap:wrap;}
+  .event-banner{height:120px;}
 }
 ::-webkit-scrollbar{width:10px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -705,14 +777,16 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
         <option value="activity">Последняя активность</option>
       </select>
     </div>
-    <table class="roster-table">
-      <thead>
-        <tr>
-          <th>Игрок</th><th>Роль</th><th class="sortable" id="trophySortHeader" onclick="toggleTrophySort()">Кубки ↓</th><th>Лучший бравлер</th><th>Винрейт <span style="color:var(--text-faint); font-weight:600;">(посл. бои)</span></th><th>Активность</th>
-        </tr>
-      </thead>
-      <tbody id="rosterBody"></tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="roster-table">
+        <thead>
+          <tr>
+            <th>Игрок</th><th>Роль</th><th class="sortable" id="trophySortHeader" onclick="toggleTrophySort()">Кубки ↓</th><th>Лучший бравлер</th><th>Винрейт <span style="color:var(--text-faint); font-weight:600;">(посл. бои)</span></th><th>Активность</th>
+          </tr>
+        </thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+    </div>
   </div>
 </section>
 
@@ -909,7 +983,6 @@ footer{border-top:1px solid var(--stroke); margin-top:50px; padding:30px 0; colo
 
 <footer class="wrap">
   © 2026 Family™ 
-</footer>
 
 <!-- Player modal -->
 <div class="modal-overlay" id="playerModal">
